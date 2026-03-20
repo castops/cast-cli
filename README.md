@@ -1,13 +1,10 @@
 # CAST — CI/CD Automation & Security Toolkit
 
-**One command. Production-grade DevSecOps pipeline.**
+**Copy. Paste. Production-grade DevSecOps pipeline.**
 
-CAST sets up a complete, security-hardened CI/CD pipeline for your project in seconds —
-so you can ship with confidence without being a DevSecOps expert.
-
-```bash
-cast init
-```
+CAST is a collection of battle-tested GitHub Actions workflow templates —
+so you can get a complete, security-hardened CI/CD pipeline on day one,
+without being a DevSecOps expert.
 
 ---
 
@@ -23,7 +20,7 @@ get a production-grade pipeline on day one.
 
 ## What You Get
 
-After `cast init`, your repository is configured with:
+Each CAST template configures your repository with:
 
 | Layer | Tool | What It Does |
 |-------|------|--------------|
@@ -45,19 +42,24 @@ All findings surface directly in GitHub's Security tab. No external dashboards n
 - GitHub repository
 - GitHub Actions enabled
 
-### Install
+### Usage
+
+1. Copy the template for your stack:
 
 ```bash
-pip install cast-cli
+curl -O https://raw.githubusercontent.com/castops/cast/main/templates/python/devsecops.yml
 ```
 
-### Initialize
+2. Move it to your repository:
 
 ```bash
-cast init
+mkdir -p .github/workflows
+mv devsecops.yml .github/workflows/
 ```
 
-That's it. CAST detects your project type and configures the right pipeline automatically.
+3. Commit and push. That's it.
+
+> **`cast` CLI coming soon** — `cast init` will automate steps 1–3 automatically.
 
 ---
 
