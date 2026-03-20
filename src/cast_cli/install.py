@@ -1,16 +1,9 @@
 """Download and install a CAST workflow template."""
 
+from importlib.resources import files
 from pathlib import Path
 
-import httpx
-
-TEMPLATE_BASE_URL = (
-    "https://raw.githubusercontent.com/castops/cast/main/templates"
-)
-
-SUPPORTED: dict[str, str] = {
-    "python": f"{TEMPLATE_BASE_URL}/python/devsecops.yml",
-}
+SUPPORTED: set[str] = {"python"}
 
 WORKFLOW_PATH = Path(".github/workflows/devsecops.yml")
 
@@ -20,10 +13,8 @@ def is_supported(project_type: str) -> bool:
 
 
 def fetch_template(project_type: str) -> str:
-    url = SUPPORTED[project_type]
-    response = httpx.get(url, follow_redirects=True, timeout=15)
-    response.raise_for_status()
-    return response.text
+    resource = files("cast_cli.templates") / project_type / "devsecops.yml"
+    return resource.read_text(encoding="utf-8")
 
 
 def write_template(content: str) -> None:
