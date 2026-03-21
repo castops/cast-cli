@@ -20,7 +20,7 @@ Add to your `.gitlab-ci.yml`:
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 ```
 
 Replace `python` with `nodejs` or `go` to match your stack.
@@ -95,7 +95,7 @@ you can add your own stages without conflict:
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 
 stages:
   - cast-scan

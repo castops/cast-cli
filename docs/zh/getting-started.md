@@ -139,7 +139,7 @@ cast init --platform gitlab
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 ```
 
 将 `python` 替换为 `nodejs` 或 `go`。
@@ -187,7 +187,7 @@ mkdir -p .github/workflows
 
 # Python 项目
 curl -o .github/workflows/devsecops.yml \
-  https://raw.githubusercontent.com/castops/cast/main/templates/python/devsecops.yml
+  https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/python/devsecops.yml
 
 git add .github/workflows/devsecops.yml
 git commit -m "ci: add CAST DevSecOps pipeline"

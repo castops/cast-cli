@@ -4,9 +4,9 @@ from pathlib import Path
 
 
 MARKERS: dict[str, list[str]] = {
-    "python": ["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg"],
-    "nodejs": ["package.json"],
     "go":     ["go.mod"],
+    "nodejs": ["package.json"],
+    "python": ["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg"],
 }
 
 CI_MARKERS: dict[str, list[str]] = {

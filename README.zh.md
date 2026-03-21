@@ -90,7 +90,7 @@ mkdir -p .github/workflows
 
 # 下载 Python 模板（替换 python 为 nodejs 或 go）
 curl -o .github/workflows/devsecops.yml \
-  https://raw.githubusercontent.com/castops/cast/main/templates/python/devsecops.yml
+  https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/python/devsecops.yml
 
 # 提交并推送
 git add .github/workflows/devsecops.yml
@@ -103,7 +103,7 @@ git push
 ```yaml
 # .gitlab-ci.yml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 ```
 
 ---

@@ -29,5 +29,11 @@ where = ["src"]
 
 [tool.setuptools_scm]
 
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.ruff]
 target-version = "py39"

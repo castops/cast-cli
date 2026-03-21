@@ -87,7 +87,7 @@ cast init --platform gitlab
 1. Copy the template for your stack:
 
 ```bash
-curl -O https://raw.githubusercontent.com/castops/cast/main/templates/python/devsecops.yml
+curl -O https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/python/devsecops.yml
 ```
 
 2. Move it to your repository:

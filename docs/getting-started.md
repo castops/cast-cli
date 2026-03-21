@@ -141,7 +141,7 @@ mkdir -p .github/workflows
 
 # Download the Python template
 curl -o .github/workflows/devsecops.yml \
-  https://raw.githubusercontent.com/castops/cast/main/templates/python/devsecops.yml
+  https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/python/devsecops.yml
 
 # Commit and push
 git add .github/workflows/devsecops.yml

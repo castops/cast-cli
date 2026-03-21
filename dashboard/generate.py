@@ -12,7 +12,6 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from string import Template
 
 
 def parse_sarif(sarif_path: Path) -> dict:
@@ -154,35 +153,56 @@ def _escape(text: str) -> str:
     )
 
 
-def generate_dashboard(
-    sarif_dir: Path,
-    output_path: Path,
-    commit_sha: str = "unknown",
-) -> None:
-    sarif_files = sorted(sarif_dir.glob("**/*.sarif"))
-    if not sarif_files:
-        print(f"No .sarif files found in {sarif_dir}", file=sys.stderr)
+def render_compliance_banner(failing: int, total_critical: int, total_scans: int) -> str:
+    if total_scans == 0:
+        return ""
+    if failing == 0 and total_critical == 0:
+        sub = f"All {total_scans} scan{'s' if total_scans != 1 else ''} passed. No critical issues."
+        return (
+            '<div class="compliance-banner all-clear" role="status" aria-live="polite">'
+            '<span class="icon" aria-hidden="true">✅</span>'
+            '<div><div class="verdict">ALL CLEAR</div>'
+            f'<div class="sub">{sub}</div></div>'
+            "</div>"
+        )
+    else:
+        desc = f"{failing} of {total_scans} scan{'s' if total_scans != 1 else ''} require attention."
+        crit_label = f"{total_critical} critical issue{'s' if total_critical != 1 else ''}."
+        return (
+            '<div class="compliance-banner has-issues" role="alert">'
+            '<span class="icon" aria-hidden="true">❌</span>'
+            '<div><div class="verdict">'
+            f'{total_critical} CRITICAL {"ISSUES" if total_critical != 1 else "ISSUE"}'
+            "</div>"
+            f'<div class="sub">{desc}</div></div>'
+            "</div>"
+        )
 
-    scans = [r for f in sarif_files if (r := parse_sarif(f)) is not None]
 
-    total_critical = sum(s["critical"] for s in scans)
-    total_high = sum(s["high"] for s in scans)
-    total_findings = sum(len(s["findings"]) for s in scans)
-    passing = sum(1 for s in scans if s["status"] == "PASS")
-    failing = sum(1 for s in scans if s["status"] == "FAIL")
+def render_empty_state() -> str:
+    return (
+        '<div class="empty-state" role="status">'
+        '<div class="empty-icon" aria-hidden="true">🛡️</div>'
+        "<h2>No scans yet</h2>"
+        "<p>No SARIF results found. Make sure your CAST pipeline has run at least once "
+        "and that SARIF artifacts have been collected.</p>"
+        '<a href="https://github.com/castops/cast/blob/main/docs/dashboard-guide.md">'
+        "View pipeline setup guide →</a>"
+        "</div>"
+    )
 
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    # Build rows HTML
+def render_table(scans: list[dict]) -> str:
     rows_html = []
     for scan in scans:
+        row_class = ' class="row-fail"' if scan["status"] == "FAIL" else ""
         row = (
-            f"<tr>"
+            f"<tr{row_class}>"
+            f"<td>{render_badge(scan['status'])}</td>"
             f"<td>"
             f'<div style="font-weight:600">{_escape(scan["name"])}</div>'
             f'<div style="margin-top:4px">{render_tools_html(scan["tools"])}</div>'
             f"</td>"
-            f"<td>{render_badge(scan['status'])}</td>"
             f"<td>{render_count(scan['critical'], 'critical')}</td>"
             f"<td>{render_count(scan['high'], 'high')}</td>"
             f"<td>{render_count(scan['medium'], '')}</td>"
@@ -191,36 +211,78 @@ def generate_dashboard(
         )
         rows_html.append(row)
 
-    template_path = Path(__file__).parent / "template.html"
-    template_text = template_path.read_text(encoding="utf-8")
+    rows = "\n".join(rows_html)
+    return (
+        '<div class="table-wrap">'
+        '<table role="table" aria-label="Security scan results">'
+        "<thead><tr>"
+        '<th scope="col">Status</th>'
+        '<th scope="col">Project / Tool</th>'
+        '<th scope="col">Critical</th>'
+        '<th scope="col">High</th>'
+        '<th scope="col">Medium</th>'
+        '<th scope="col">Details</th>'
+        "</tr></thead>"
+        f"<tbody>{rows}</tbody>"
+        "</table></div>"
+    )
 
-    # Simple Jinja2-style substitution without requiring Jinja2 dependency.
-    # We replace template placeholders manually for zero-dependency operation.
-    html = template_text
+
+def generate_dashboard(
+    sarif_dir: Path,
+    output_path: Path,
+    commit_sha: str = "unknown",
+    project_name: str = "",
+) -> None:
+    sarif_files = sorted(sarif_dir.glob("**/*.sarif"))
+    if not sarif_files:
+        print(f"No .sarif files found in {sarif_dir}", file=sys.stderr)
+
+    scans = [r for f in sarif_files if (r := parse_sarif(f)) is not None]
+
+    if sarif_files and not scans:
+        print(
+            f"Error: found {len(sarif_files)} SARIF file(s) but all failed to parse. "
+            "Dashboard not generated to avoid false 'ALL CLEAR' output.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Override the scan name with project_name if only one SARIF file
+    if project_name and len(scans) == 1:
+        scans[0]["name"] = project_name
+
+    total_critical = sum(s["critical"] for s in scans)
+    total_high = sum(s["high"] for s in scans)
+    passing = sum(1 for s in scans if s["status"] == "PASS")
+    failing = sum(1 for s in scans if s["status"] == "FAIL")
+
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    sha_short = commit_sha[:12] if len(commit_sha) > 12 else commit_sha
+
+    compliance_banner = render_compliance_banner(failing, total_critical, len(scans))
+    table_or_empty = render_table(scans) if scans else render_empty_state()
+
+    template_path = Path(__file__).parent / "template.html"
+    html = template_path.read_text(encoding="utf-8")
+
     replacements = {
         "{{ generated_at }}": generated_at,
-        "{{ commit_sha }}": commit_sha[:12] if len(commit_sha) > 12 else commit_sha,
-        "{{ summary.passing }}": str(passing),
+        "{{ commit_sha }}": sha_short,
         "{{ summary.failing }}": str(failing),
         "{{ summary.total_critical }}": str(total_critical),
         "{{ summary.total_high }}": str(total_high),
-        "{{ summary.total_findings }}": str(total_findings),
+        "{{ compliance_banner }}": compliance_banner,
+        "{{ table_or_empty }}": table_or_empty,
     }
     for placeholder, value in replacements.items():
         html = html.replace(placeholder, value)
 
-    # Replace the scans loop block
-    loop_start = "    {% for scan in scans %}"
-    loop_end = "    {% endfor %}"
-    start_idx = html.find(loop_start)
-    end_idx = html.find(loop_end)
-    if start_idx != -1 and end_idx != -1:
-        html = html[:start_idx] + "\n".join(rows_html) + html[end_idx + len(loop_end):]
-
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
+    status = "ALL CLEAR" if failing == 0 and total_critical == 0 else f"{failing} FAILING"
     print(f"Dashboard written to {output_path}")
-    print(f"  Scans: {len(scans)} | Critical: {total_critical} | High: {total_high} | Findings: {total_findings}")
+    print(f"  Status: {status} | Critical: {total_critical} | High: {total_high} | Scans: {len(scans)}")
 
 
 def main() -> None:
@@ -240,12 +302,18 @@ def main() -> None:
         default="unknown",
         help="Commit SHA to display in the dashboard",
     )
+    parser.add_argument(
+        "--project",
+        default="",
+        help="Project display name (overrides SARIF filename when there is one scan)",
+    )
     args = parser.parse_args()
 
     generate_dashboard(
         sarif_dir=Path(args.sarif_dir),
         output_path=Path(args.output),
         commit_sha=args.commit,
+        project_name=args.project,
     )
 
 

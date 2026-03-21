@@ -10,7 +10,7 @@ from rich.panel import Panel
 from cast_cli.detect import detect_platform, detect_project
 from cast_cli.install import (
     already_exists,
-    fetch_template,
+    load_template,
     get_workflow_path,
     is_supported,
     write_template,
@@ -90,7 +90,16 @@ def init(
     console.print(f"Detected project type: [bold green]{detected}[/bold green]")
 
     # ── detect CI platform ─────────────────────────────────────────────────────
-    resolved_platform = platform or detect_platform(Path("."))
+    if platform:
+        resolved_platform = platform
+    else:
+        resolved_platform = detect_platform(Path("."))
+        if resolved_platform == "github":
+            console.print(
+                "[dim]No CI config detected — defaulting to GitHub Actions. "
+                "Use [bold]--platform gitlab[/bold] to override.[/dim]"
+            )
+
     if resolved_platform not in ("github", "gitlab"):
         console.print(f"[red]Unsupported platform:[/red] {resolved_platform} (use github or gitlab)")
         raise typer.Exit(1)
@@ -110,7 +119,7 @@ def init(
     console.print("Installing template...", end=" ")
 
     try:
-        content = fetch_template(detected, resolved_platform)
+        content = load_template(detected, resolved_platform)
     except Exception as e:
         console.print(f"\n[red]Failed to load template:[/red] {e}")
         raise typer.Exit(1)

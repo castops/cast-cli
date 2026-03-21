@@ -18,6 +18,7 @@
     --critical-bg: #3d1a1a;
     --high-bg: #3d2a1a;
     --pass-bg: #1a2e1a;
+    --fail-row-bg: rgba(248, 81, 73, 0.05);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -28,42 +29,84 @@
     line-height: 1.5;
     padding: 24px;
   }
+  @media (max-width: 640px) {
+    body { padding: 16px; }
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
   header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
   }
-  header h1 { font-size: 20px; font-weight: 600; }
+  header h1 { font-size: 18px; font-weight: 600; }
   header .meta { font-size: 12px; color: var(--muted); margin-left: auto; text-align: right; }
+  .sha { font-family: monospace; font-size: 11px; color: var(--muted); }
+
+  /* ── Compliance banner ───────────────────────────────────────────────── */
+  .compliance-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border: 1px solid;
+    margin-bottom: 20px;
+  }
+  .compliance-banner.all-clear {
+    background: var(--pass-bg);
+    border-color: var(--green);
+  }
+  .compliance-banner.has-issues {
+    background: var(--critical-bg);
+    border-color: var(--red);
+  }
+  .compliance-banner .icon { font-size: 22px; flex-shrink: 0; }
+  .compliance-banner .verdict { font-size: 17px; font-weight: 700; }
+  .compliance-banner .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Stat cards ──────────────────────────────────────────────────────── */
   .summary-bar {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 24px;
+  }
+  @media (max-width: 480px) {
+    .summary-bar { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   }
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 16px;
+    padding: 14px 16px;
     text-align: center;
   }
-  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-  .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
-  .stat-card.pass .value { color: var(--green); }
-  .stat-card.fail .value { color: var(--red); }
-  .stat-card.warn .value { color: var(--yellow); }
-  .stat-card.info .value { color: var(--blue); }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--surface);
+  .stat-card .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .stat-card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .stat-card.fail .value  { color: var(--red); }
+  .stat-card.crit .value  { color: var(--red); }
+  .stat-card.high .value  { color: var(--yellow); }
+
+  /* ── Table ───────────────────────────────────────────────────────────── */
+  .table-wrap {
+    overflow-x: auto;
     border: 1px solid var(--border);
     border-radius: 8px;
-    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    background: var(--surface);
   }
   thead th {
     background: #1c2128;
@@ -76,25 +119,35 @@
     letter-spacing: .5px;
     border-bottom: 1px solid var(--border);
   }
+  /* Accessibility: explicit column scope */
+  thead th[scope="col"] {}
   tbody tr { border-bottom: 1px solid var(--border); }
   tbody tr:last-child { border-bottom: none; }
+  tbody tr.row-fail { background: var(--fail-row-bg); }
   tbody td { padding: 12px 14px; vertical-align: top; }
+
+  /* ── Badges ──────────────────────────────────────────────────────────── */
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 13px;
     font-weight: 600;
-    padding: 2px 10px;
+    padding: 3px 10px;
     border-radius: 20px;
+    white-space: nowrap;
   }
   .badge.pass { background: var(--pass-bg); color: var(--green); }
   .badge.fail { background: var(--critical-bg); color: var(--red); }
   .badge.warn { background: var(--high-bg); color: var(--yellow); }
+
+  /* ── Counts ──────────────────────────────────────────────────────────── */
   .count { font-weight: 700; }
   .count.critical { color: var(--red); }
   .count.high { color: var(--yellow); }
   .count.ok { color: var(--muted); }
+
+  /* ── Tool tags ───────────────────────────────────────────────────────── */
   .tool-tag {
     display: inline-block;
     background: #1c2128;
@@ -104,7 +157,10 @@
     font-size: 11px;
     color: var(--muted);
     margin-right: 4px;
+    margin-top: 2px;
   }
+
+  /* ── Expand / findings ───────────────────────────────────────────────── */
   details { margin-top: 6px; }
   summary {
     cursor: pointer;
@@ -112,12 +168,20 @@
     font-size: 12px;
     user-select: none;
     list-style: none;
+    /* Minimum touch target via padding */
+    padding: 8px 0;
+    display: block;
   }
   summary::-webkit-details-marker { display: none; }
   summary::before { content: "▶ "; }
   details[open] summary::before { content: "▼ "; }
+  summary:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
   .findings-list {
-    margin-top: 8px;
+    margin-top: 4px;
     background: #0d1117;
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -129,14 +193,47 @@
     font-size: 12px;
   }
   .finding:last-child { border-bottom: none; }
-  .finding .severity { font-weight: 700; margin-right: 8px; }
-  .finding .severity.error { color: var(--red); }
+  .finding .severity {
+    font-weight: 700;
+    margin-right: 8px;
+    display: inline-block;
+    min-width: 4em; /* alignment aid */
+  }
+  .finding .severity.error   { color: var(--red); }
   .finding .severity.warning { color: var(--yellow); }
-  .finding .severity.note { color: var(--muted); }
-  .finding .rule { color: var(--blue); font-family: monospace; margin-right: 8px; }
+  .finding .severity.note    { color: var(--muted); }
+  .finding .rule    { color: var(--blue); font-family: monospace; margin-right: 8px; }
   .finding .message { color: var(--text); }
-  .finding .location { color: var(--muted); font-family: monospace; font-size: 11px; margin-top: 2px; }
-  .sha { font-family: monospace; font-size: 11px; color: var(--muted); }
+  .finding .location {
+    color: var(--muted);
+    font-family: monospace;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ── Empty state ─────────────────────────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 64px 24px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 16px; }
+  .empty-state h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .empty-state p  { font-size: 14px; color: var(--muted); max-width: 380px; margin: 0 auto 20px; }
+  .empty-state a {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--blue);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .empty-state a:hover { border-color: var(--blue); }
+
+  /* ── Footer ──────────────────────────────────────────────────────────── */
   footer {
     margin-top: 24px;
     padding-top: 12px;
@@ -150,9 +247,10 @@
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
 <header>
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#58a6ff" opacity=".8"/>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#58a6ff" opacity=".85"/>
   </svg>
   <h1>CAST Security Dashboard</h1>
   <div class="meta">
@@ -161,111 +259,29 @@
   </div>
 </header>
 
-<div class="summary-bar">
-  <div class="stat-card pass">
-    <div class="label">Passing</div>
-    <div class="value">{{ summary.passing }}</div>
-  </div>
+<!-- ── Compliance banner ────────────────────────────────────────────────── -->
+{{ compliance_banner }}
+
+<!-- ── Stat cards ───────────────────────────────────────────────────────── -->
+<div class="summary-bar" role="region" aria-label="Security summary">
   <div class="stat-card fail">
     <div class="label">Failing</div>
-    <div class="value">{{ summary.failing }}</div>
+    <div class="value" aria-label="{{ summary.failing }} failing scans">{{ summary.failing }}</div>
   </div>
-  <div class="stat-card fail">
+  <div class="stat-card crit">
     <div class="label">Critical</div>
-    <div class="value">{{ summary.total_critical }}</div>
+    <div class="value" aria-label="{{ summary.total_critical }} critical findings">{{ summary.total_critical }}</div>
   </div>
-  <div class="stat-card warn">
+  <div class="stat-card high">
     <div class="label">High</div>
-    <div class="value">{{ summary.total_high }}</div>
-  </div>
-  <div class="stat-card info">
-    <div class="label">Total Findings</div>
-    <div class="value">{{ summary.total_findings }}</div>
+    <div class="value" aria-label="{{ summary.total_high }} high findings">{{ summary.total_high }}</div>
   </div>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Project / Tool</th>
-      <th>Status</th>
-      <th>Critical</th>
-      <th>High</th>
-      <th>Medium</th>
-      <th>Details</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for scan in scans %}
-    <tr>
-      <td>
-        <div style="font-weight:600">{{ scan.name }}</div>
-        <div style="margin-top:4px">
-          {% for tool in scan.tools %}
-          <span class="tool-tag">{{ tool }}</span>
-          {% endfor %}
-        </div>
-      </td>
-      <td>
-        {% if scan.status == "PASS" %}
-        <span class="badge pass">&#10003; PASS</span>
-        {% elif scan.status == "FAIL" %}
-        <span class="badge fail">&#10007; FAIL</span>
-        {% else %}
-        <span class="badge warn">&#9888; WARN</span>
-        {% endif %}
-      </td>
-      <td>
-        {% if scan.critical > 0 %}
-        <span class="count critical">{{ scan.critical }}</span>
-        {% else %}
-        <span class="count ok">—</span>
-        {% endif %}
-      </td>
-      <td>
-        {% if scan.high > 0 %}
-        <span class="count high">{{ scan.high }}</span>
-        {% else %}
-        <span class="count ok">—</span>
-        {% endif %}
-      </td>
-      <td>
-        {% if scan.medium > 0 %}
-        <span class="count">{{ scan.medium }}</span>
-        {% else %}
-        <span class="count ok">—</span>
-        {% endif %}
-      </td>
-      <td>
-        {% if scan.findings %}
-        <details>
-          <summary>{{ scan.findings | length }} finding(s)</summary>
-          <div class="findings-list">
-            {% for f in scan.findings %}
-            <div class="finding">
-              <span class="severity {{ f.level }}">
-                {% if f.level == "error" %}CRITICAL
-                {% elif f.level == "warning" %}HIGH
-                {% else %}{{ f.level | upper }}{% endif %}
-              </span>
-              <span class="rule">{{ f.rule_id }}</span>
-              <span class="message">{{ f.message }}</span>
-              {% if f.location %}
-              <div class="location">{{ f.location }}</div>
-              {% endif %}
-            </div>
-            {% endfor %}
-          </div>
-        </details>
-        {% else %}
-        <span style="color:var(--muted);font-size:12px">No findings</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<!-- ── Scan table / empty state ─────────────────────────────────────────── -->
+{{ table_or_empty }}
 
+<!-- ── Footer ───────────────────────────────────────────────────────────── -->
 <footer>
   Generated by <a href="https://github.com/castops/cast">CAST</a> — CI/CD Automation &amp; Security Toolkit
 </footer>

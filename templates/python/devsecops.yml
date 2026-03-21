@@ -119,7 +119,7 @@ jobs:
   gate:
     name: Security Gate
     runs-on: ubuntu-latest
-    needs: [secrets, sast, sca, quality]
+    needs: [secrets, sast, sca, container, quality]
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -136,17 +136,28 @@ jobs:
             https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz
           tar xzf conftest.tar.gz conftest
           chmod +x conftest && sudo mv conftest /usr/local/bin/
-      - name: Fetch policy
+      - name: Write default policy
         run: |
-          # Use local policy override if present, otherwise fetch from CAST repo
+          # Use local policy/ directory if present; otherwise write the built-in default.
+          # For strict/permissive mode, copy the desired .rego from:
+          #   https://github.com/castops/cast/tree/main/policy
           if [ ! -d policy ] || [ -z "$(ls -A policy/*.rego 2>/dev/null)" ]; then
             mkdir -p policy
-            CAST_POLICY="${CAST_POLICY:-default}"
-            curl -fsSL -o policy/active.rego \
-              "https://raw.githubusercontent.com/castops/cast/main/policy/${CAST_POLICY}.rego"
+            cat > policy/active.rego << 'REGO'
+package main
+
+import future.keywords.if
+import future.keywords.in
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.level == "error"
+    tool := run.tool.driver.name
+    msg := sprintf("[CRITICAL] %s — %s (rule: %s)", [tool, result.message.text, result.ruleId])
+}
+REGO
           fi
-        env:
-          CAST_POLICY: ${{ vars.CAST_POLICY }}
       - name: Evaluate policy
         run: |
           GATE_FAILED=0

@@ -19,7 +19,7 @@ def is_supported(project_type: str) -> bool:
     return project_type in SUPPORTED
 
 
-def fetch_template(project_type: str, platform: str = "github") -> str:
+def load_template(project_type: str, platform: str = "github") -> str:
     if platform == "gitlab":
         resource = (
             files("cast_cli.templates") / "gitlab" / project_type / "devsecops.yml"

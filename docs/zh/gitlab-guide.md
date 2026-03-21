@@ -20,7 +20,7 @@ CAST 自动检测项目类型并写入 `.gitlab-ci.yml`。
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 ```
 
 将 `python` 替换为 `nodejs` 或 `go` 以匹配你的技术栈。
@@ -97,7 +97,7 @@ policy/
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/python/devsecops.yml'
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
 
 stages:
   - cast-scan
