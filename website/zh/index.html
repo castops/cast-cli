@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAST — 生产级 DevSecOps 流水线</title>
+  <meta name="description" content="复制。粘贴。生产级 DevSecOps 流水线。CAST 让任何团队第一天就拥有完整的安全加固 CI/CD 流水线。">
+  <meta property="og:title" content="CAST — 生产级 DevSecOps 流水线">
+  <meta property="og:description" content="秘密扫描、SAST、SCA、容器安全、策略即代码门禁。支持 GitHub Actions + GitLab CI。一条命令。">
+  <meta property="og:type" content="website">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --yellow:    #d29922;
+      --blue:      #58a6ff;
+      --purple:    #bc8cff;
+      --nav-h:     60px;
+      --max-w:     1100px;
+      --radius:    8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                   BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ─────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: var(--max-w); width: 100%; margin: 0 auto;
+      display: flex; align-items: center; gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700; font-size: 17px; color: var(--text);
+      letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+    }
+    .nav-links { display: flex; gap: 24px; font-size: 14px; }
+    .nav-links a { color: var(--muted); transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .lang-switch {
+      display: flex; gap: 2px;
+      padding: 3px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .lang-switch a {
+      padding: 3px 8px; border-radius: 4px;
+      color: var(--muted); transition: all 0.15s;
+    }
+    .lang-switch a:hover { text-decoration: none; color: var(--text); }
+    .lang-switch a.active {
+      background: var(--surface2); color: var(--text); font-weight: 500;
+    }
+    .btn-ghost {
+      padding: 6px 14px; border-radius: 6px;
+      border: 1px solid var(--border); font-size: 13px;
+      color: var(--text); background: transparent; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-ghost:hover { border-color: var(--muted); background: var(--surface); text-decoration: none; }
+
+    /* ── Hero ────────────────────────────────────────────────── */
+    .hero {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 96px 24px 80px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+    }
+    @media (max-width: 760px) {
+      .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 20px 48px; }
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px 4px 6px; border-radius: 20px;
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      background: rgba(63, 185, 80, 0.08);
+      font-size: 12px; color: var(--green); margin-bottom: 20px;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 700;
+      line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 20px;
+    }
+    .hero h1 .accent { color: var(--blue); }
+    .hero-sub {
+      font-size: 17px; color: var(--muted); max-width: 480px;
+      margin-bottom: 32px; line-height: 1.65;
+    }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      padding: 10px 20px; border-radius: var(--radius);
+      background: var(--blue); color: #0d1117; font-weight: 600;
+      font-size: 14px; transition: opacity 0.15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { opacity: 0.88; text-decoration: none; }
+    .btn-secondary {
+      padding: 10px 20px; border-radius: var(--radius);
+      border: 1px solid var(--border); color: var(--text); font-size: 14px;
+      transition: border-color 0.15s, background 0.15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-secondary:hover { border-color: var(--muted); background: var(--surface); text-decoration: none; }
+
+    /* ── Terminal ────────────────────────────────────────────── */
+    .terminal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px; box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot.red   { background: #ff5f56; }
+    .terminal-dot.amber { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+    .terminal-bar .title { margin: 0 auto; color: var(--muted); font-size: 11px; }
+    .terminal-body { padding: 16px; line-height: 1.9; }
+    .t-prompt { color: var(--green); }
+    .t-cmd    { color: var(--text); }
+    .t-out    { color: var(--muted); }
+    .t-ok     { color: var(--green); }
+    .t-dim    { color: #484f58; }
+
+    /* ── Shared section ──────────────────────────────────────── */
+    section { padding: 80px 24px; }
+    .section-inner { max-width: var(--max-w); margin: 0 auto; }
+    .section-label {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--blue); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(24px, 4vw, 36px); font-weight: 700;
+      letter-spacing: -0.3px; margin-bottom: 12px;
+    }
+    .section-sub { color: var(--muted); max-width: 560px; font-size: 16px; }
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    .stats-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-inner {
+      max-width: var(--max-w); margin: 0 auto; padding: 24px;
+      display: flex; gap: 48px; justify-content: center; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-n {
+      font-size: 28px; font-weight: 700; color: var(--text);
+      letter-spacing: -1px; line-height: 1; margin-bottom: 4px;
+    }
+    .stat-n .unit { font-size: 16px; color: var(--muted); font-weight: 400; }
+    .stat-label { font-size: 12px; color: var(--muted); }
+
+    /* ── Tools ───────────────────────────────────────────────── */
+    .tools-section { background: var(--surface); border-top: 1px solid var(--border); }
+    .tools-grid {
+      margin-top: 48px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    .tool-card {
+      background: var(--surface); padding: 28px; transition: background 0.15s;
+    }
+    .tool-card:hover { background: var(--surface2); }
+    .tool-icon { font-size: 22px; margin-bottom: 12px; }
+    .tool-name { font-weight: 600; margin-bottom: 6px; font-size: 15px; }
+    .tool-powered { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .tool-powered a { color: var(--blue); }
+    .tool-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Steps ───────────────────────────────────────────────── */
+    .steps {
+      margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 32px; position: relative;
+    }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+    .steps::before {
+      content: ''; position: absolute;
+      top: 28px; left: calc(16.67% + 16px); right: calc(16.67% + 16px);
+      height: 1px; background: var(--border);
+    }
+    @media (max-width: 700px) { .steps::before { display: none; } }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: var(--blue);
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .step-title { font-weight: 600; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .step-code {
+      margin-top: 12px; padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; font-family: monospace; font-size: 12px; color: var(--green);
+    }
+
+    /* ── Matrix ──────────────────────────────────────────────── */
+    .matrix-section { background: var(--surface); border-top: 1px solid var(--border); }
+    .matrix { margin-top: 48px; overflow-x: auto; }
+    .matrix table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; font-size: 13px;
+    }
+    .matrix th {
+      background: var(--surface2); padding: 12px 20px; text-align: left;
+      font-weight: 600; font-size: 12px; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .matrix td {
+      padding: 14px 20px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    .matrix tr:last-child td { border-bottom: none; }
+    .matrix tr:hover td { background: rgba(255,255,255,0.02); }
+    .check { color: var(--green); font-size: 15px; }
+    .stack-name { font-weight: 600; }
+    .stack-tools { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .platform-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px;
+      border: 1px solid var(--border); font-size: 11px; color: var(--muted);
+    }
+
+    /* ── Plugin ──────────────────────────────────────────────── */
+    .plugin-section { border-top: 1px solid var(--border); }
+    .plugin-inner {
+      max-width: var(--max-w); margin: 0 auto; padding: 80px 24px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: start;
+    }
+    @media (max-width: 700px) { .plugin-inner { grid-template-columns: 1fr; gap: 40px; } }
+    .plugin-code {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      font-family: monospace; font-size: 12px;
+    }
+    .plugin-code-header {
+      padding: 8px 14px; background: var(--surface2);
+      border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted);
+    }
+    .plugin-code pre { padding: 16px; line-height: 1.8; overflow-x: auto; }
+    .kw  { color: var(--purple); }
+    .str { color: var(--green); }
+    .key { color: var(--blue); }
+    .val { color: var(--yellow); }
+    .cm  { color: var(--muted); }
+
+    /* ── CTA strip ───────────────────────────────────────────── */
+    .cta-strip {
+      background: linear-gradient(135deg, rgba(88,166,255,0.06) 0%, rgba(188,140,255,0.06) 100%);
+      border-top: 1px solid var(--border); text-align: center; padding: 80px 24px;
+    }
+    .cta-strip h2 {
+      font-size: clamp(24px, 4vw, 36px); font-weight: 700;
+      margin-bottom: 16px; letter-spacing: -0.3px;
+    }
+    .cta-strip p { color: var(--muted); max-width: 480px; margin: 0 auto 32px; font-size: 16px; }
+    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    footer { border-top: 1px solid var(--border); padding: 40px 24px; }
+    .footer-inner {
+      max-width: var(--max-w); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+    .footer-links { display: flex; gap: 20px; font-size: 13px; color: var(--muted); }
+    .footer-links a { color: var(--muted); }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-right { font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ──────────────────────────────────────────────────────── -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="/cast/zh/">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="#how-it-works">工作原理</a>
+        <a href="#templates">模板</a>
+        <a href="../docs/getting-started.html">文档</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">更新日志</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="../">EN</a>
+          <a href="./" class="active">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div>
+      <div class="hero-badge">
+        <span class="dot"></span>
+        开源 · Apache 2.0
+      </div>
+      <h1>
+        一条命令，获得<br>
+        <span class="accent">生产级</span><br>
+        DevSecOps 流水线。
+      </h1>
+      <p class="hero-sub">
+        秘密扫描、SAST、SCA、容器安全、策略即代码门禁 ——
+        支持 Python、Node.js 和 Go，兼容 GitHub Actions 与 GitLab CI。
+      </p>
+      <div class="hero-ctas">
+        <a class="btn-primary" href="../docs/getting-started.html">快速开始 →</a>
+        <a class="btn-secondary" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          查看源码
+        </a>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot red"></span>
+        <span class="terminal-dot amber"></span>
+        <span class="terminal-dot green"></span>
+        <span class="title">bash</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">$</span> <span class="t-cmd">pip install cast-cli</span></div>
+        <div class="t-dim">正在安装 cast-cli…  ✓</div>
+        <div>&nbsp;</div>
+        <div><span class="t-prompt">$</span> <span class="t-cmd">cast init</span></div>
+        <div class="t-out">🔍 检测到：Python · GitHub Actions</div>
+        <div>&nbsp;</div>
+        <div class="t-out">写入 <span style="color:var(--blue)">.github/workflows/devsecops.yml</span></div>
+        <div>&nbsp;</div>
+        <div class="t-ok">✓ 秘密检测     Gitleaks</div>
+        <div class="t-ok">✓ SAST         Semgrep</div>
+        <div class="t-ok">✓ SCA          pip-audit</div>
+        <div class="t-ok">✓ 容器安全     Trivy</div>
+        <div class="t-ok">✓ 代码质量     Ruff</div>
+        <div class="t-ok">✓ 安全门禁     conftest + OPA</div>
+        <div>&nbsp;</div>
+        <div class="t-ok">🛡️  流水线已就绪。推送代码即可激活。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats bar ─────────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat">
+        <div class="stat-n">6</div>
+        <div class="stat-label">安全检测层</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">3</div>
+        <div class="stat-label">支持语言</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">2</div>
+        <div class="stat-label">CI 平台</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">1<span class="unit"> 条命令</span></div>
+        <div class="stat-label">完成安装</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n">0</div>
+        <div class="stat-label">外部账号依赖</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── What you get ─────────────────────────────────────────────── -->
+  <section class="tools-section" id="features">
+    <div class="section-inner">
+      <div class="section-label">你能获得什么</div>
+      <h2 class="section-title">完整的安全技术栈。<br>开箱即用。</h2>
+      <p class="section-sub">每套 CAST 模板并行运行 5 个安全 Job，最后由策略即代码门禁决定 PR 能否合并。</p>
+
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="tool-icon">🔑</div>
+          <div class="tool-name">秘密检测</div>
+          <div class="tool-powered">基于 <a href="https://github.com/gitleaks/gitleaks">Gitleaks</a></div>
+          <div class="tool-desc">扫描完整的 git 历史记录，检测泄露的凭证、API 密钥和 Token，而不仅仅是最新提交。</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">🔍</div>
+          <div class="tool-name">SAST 静态分析</div>
+          <div class="tool-powered">基于 <a href="https://semgrep.dev">Semgrep</a></div>
+          <div class="tool-desc">使用 1000+ 开源规则在源码中发现安全漏洞和不安全模式，SARIF 结果自动上传至 GitHub Security。</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">📦</div>
+          <div class="tool-name">SCA 依赖审计</div>
+          <div class="tool-powered">pip-audit · npm audit · govulncheck</div>
+          <div class="tool-desc">检测依赖库中的已知 CVE。根据技术栈自动选择合适的工具。</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">🐳</div>
+          <div class="tool-name">容器安全</div>
+          <div class="tool-powered">基于 <a href="https://trivy.dev">Trivy</a></div>
+          <div class="tool-desc">扫描 Docker 镜像中的操作系统和软件库 CVE。未检测到 Dockerfile 时自动跳过。</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">✏️</div>
+          <div class="tool-name">代码质量</div>
+          <div class="tool-powered">Ruff · ESLint · staticcheck</div>
+          <div class="tool-desc">强制执行代码风格和质量标准。默认为信息性检查，不阻塞合并。</div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">🚦</div>
+          <div class="tool-name">安全门禁</div>
+          <div class="tool-powered">基于 <a href="https://conftest.dev">conftest</a> + OPA Rego</div>
+          <div class="tool-desc">对所有 SARIF 结果执行版本化策略评估。发现 CRITICAL 漏洞时阻止合并。策略文件随仓库版本化。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ─────────────────────────────────────────────── -->
+  <section id="how-it-works">
+    <div class="section-inner">
+      <div class="section-label">工作原理</div>
+      <h2 class="section-title">从零到生产级流水线，<br>五分钟以内。</h2>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">安装 CLI</div>
+          <div class="step-desc">一条 pip 命令。支持 Python 3.9+。无需外部账号或 API Token。</div>
+          <div class="step-code">pip install cast-cli</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">执行 cast init</div>
+          <div class="step-desc">CAST 自动识别你的技术栈和 CI 平台，将工作流文件写入正确路径。</div>
+          <div class="step-code">cast init</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">推送代码</div>
+          <div class="step-desc">此后每次 push 和 PR 都会触发完整的安全流水线，存在风险时阻止不安全的合并。</div>
+          <div class="step-code">git push</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Template matrix ───────────────────────────────────────────── -->
+  <section class="matrix-section" id="templates">
+    <div class="section-inner">
+      <div class="section-label">模板矩阵</div>
+      <h2 class="section-title">每种技术栈。两个平台。</h2>
+      <p class="section-sub">所有模板均包含完整的 6 层安全技术栈，并在每次 CAST 发布时经过测试验证。</p>
+
+      <div class="matrix">
+        <table>
+          <thead>
+            <tr>
+              <th>技术栈</th>
+              <th>SCA 工具</th>
+              <th>质量工具</th>
+              <th><span class="platform-badge">GitHub Actions</span></th>
+              <th><span class="platform-badge">GitLab CI</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="stack-name">🐍 Python</div>
+                <div class="stack-tools">pyproject.toml · requirements.txt · setup.py</div>
+              </td>
+              <td>pip-audit</td>
+              <td>Ruff</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="stack-name">⬡ Node.js</div>
+                <div class="stack-tools">package.json</div>
+              </td>
+              <td>npm audit</td>
+              <td>ESLint</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="stack-name">🐹 Go</div>
+                <div class="stack-tools">go.mod</div>
+              </td>
+              <td>govulncheck</td>
+              <td>staticcheck</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Plugin teaser ─────────────────────────────────────────────── -->
+  <section class="plugin-section" id="extend">
+    <div class="plugin-inner">
+      <div>
+        <div class="section-label">可扩展</div>
+        <h2 class="section-title">接入你自己的工具。</h2>
+        <p style="color:var(--muted); font-size:16px; margin: 16px 0 24px; line-height:1.65;">
+          CAST 的门禁使用 SARIF 作为统一接口。
+          任何能输出 SARIF 文件的工具都可以自动接入流水线。
+          无需 fork，无需改动现有配置。
+        </p>
+        <p style="color:var(--muted); font-size:14px;">
+          用 Snyk 替换 pip-audit，在 Semgrep 旁边加入 Bandit，
+          接入内部合规扫描器 —— 门禁会自动评估所有结果。
+        </p>
+        <div style="margin-top:28px;">
+          <a class="btn-secondary" href="../docs/plugin-guide.html">插件指南 →</a>
+        </div>
+      </div>
+
+      <div class="plugin-code">
+        <div class="plugin-code-header">custom-snyk.yml — 与 CAST 工作流并列放置</div>
+        <pre><span class="key">jobs</span><span class="cm">:</span>
+  <span class="key">snyk</span><span class="cm">:</span>
+    <span class="key">runs-on</span><span class="cm">:</span> <span class="str">ubuntu-latest</span>
+    <span class="key">steps</span><span class="cm">:</span>
+      <span class="cm">- uses:</span> <span class="str">actions/checkout@v4</span>
+      <span class="cm">-</span> <span class="key">run</span><span class="cm">:</span> <span class="str">snyk test --sarif-file-output=snyk.sarif</span>
+        <span class="key">env</span><span class="cm">:</span>
+          <span class="key">SNYK_TOKEN</span><span class="cm">:</span> <span class="val">${{ secrets.SNYK_TOKEN }}</span>
+      <span class="cm">- uses:</span> <span class="str">actions/upload-artifact@v4</span>
+        <span class="key">with</span><span class="cm">:</span>
+          <span class="cm"># CAST 门禁自动收集所有 cast-sarif-* artifact</span>
+          <span class="key">name</span><span class="cm">:</span> <span class="str">cast-sarif-snyk</span>
+          <span class="key">path</span><span class="cm">:</span> <span class="str">snyk.sarif</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA strip ────────────────────────────────────────────────── -->
+  <div class="cta-strip">
+    <h2>从今天开始，交付安全的代码。</h2>
+    <p>一条命令。无需外部账号。零配置。</p>
+    <div class="cta-btns">
+      <a class="btn-primary" href="../docs/getting-started.html">快速开始 →</a>
+      <a class="btn-secondary" href="https://github.com/castops/cast">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        在 GitHub 上 Star
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo"><span>🛡️</span> CAST</div>
+      <div class="footer-links">
+        <a href="https://github.com/castops/cast">GitHub</a>
+        <a href="../docs/getting-started.html">文档</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">更新日志</a>
+        <a href="https://github.com/castops/cast/blob/main/SECURITY.md">安全政策</a>
+        <a href="https://github.com/castops/cast/blob/main/LICENSE">许可证</a>
+      </div>
+      <div class="footer-right">Apache 2.0 · 由 castops 用心构建</div>
+    </div>
+  </footer>
+
+</body>
+</html>
