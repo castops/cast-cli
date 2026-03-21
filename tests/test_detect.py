@@ -1,7 +1,5 @@
 """Tests for cast_cli.detect — project type and platform detection."""
 
-import pytest
-from pathlib import Path
 from cast_cli.detect import detect_project, detect_platform
 
 

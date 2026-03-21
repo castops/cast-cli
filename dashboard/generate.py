@@ -167,7 +167,6 @@ def render_compliance_banner(failing: int, total_critical: int, total_scans: int
         )
     else:
         desc = f"{failing} of {total_scans} scan{'s' if total_scans != 1 else ''} require attention."
-        crit_label = f"{total_critical} critical issue{'s' if total_critical != 1 else ''}."
         return (
             '<div class="compliance-banner has-issues" role="alert">'
             '<span class="icon" aria-hidden="true">❌</span>'
@@ -254,7 +253,6 @@ def generate_dashboard(
 
     total_critical = sum(s["critical"] for s in scans)
     total_high = sum(s["high"] for s in scans)
-    passing = sum(1 for s in scans if s["status"] == "PASS")
     failing = sum(1 for s in scans if s["status"] == "FAIL")
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
