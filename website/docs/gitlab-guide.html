@@ -2,15 +2,419 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://github.com/castops/cast/blob/main/docs/gitlab-guide.md">
-  <title>CAST — gitlab guide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitLab CI Guide — CAST</title>
   <style>
-    body { background: #0d1117; color: #8b949e; font-family: -apple-system, sans-serif;
-           display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    a { color: #58a6ff; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <p>Redirecting to <a href="https://github.com/castops/cast/blob/main/docs/gitlab-guide.md">documentation on GitHub</a>…</p>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../#how-it-works">How it works</a>
+        <a href="../#templates">Templates</a>
+        <a href="getting-started.html">Docs</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="./" class="active">EN</a>
+          <a href="../../zh/">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-label">Documentation</div>
+      <a href="getting-started.html">Getting Started</a>
+      <div class="sidebar-label">Reference</div>
+      <a href="cli-reference.html">CLI Reference</a>
+      <a href="pipeline-reference.html">Pipeline Reference</a>
+      <a href="policy-reference.html">Policy Reference</a>
+      <div class="sidebar-label">Guides</div>
+      <a href="gitlab-guide.html" class="active">GitLab CI</a>
+      <a href="dashboard-guide.html">Security Dashboard</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../">CAST</a>
+        <span class="sep">/</span>
+        <span>Docs</span>
+        <span class="sep">/</span>
+        <span>GitLab CI Guide</span>
+      </div>
+
+      <h1>GitLab CI Integration Guide</h1>
+      <p>CAST supports GitLab CI alongside GitHub Actions. Use <code>cast init --platform gitlab</code> to generate a <code>.gitlab-ci.yml</code>, or include a remote template directly.</p>
+
+      <h2>Quick Start</h2>
+
+      <h3>Option A — CLI</h3>
+      <pre><code class="lang-bash">pip install cast-cli
+cast init --platform gitlab</code></pre>
+      <p>CAST auto-detects your project type and writes <code>.gitlab-ci.yml</code>.</p>
+
+      <h3>Option B — Remote include (zero-install)</h3>
+      <p>Add to your <code>.gitlab-ci.yml</code>:</p>
+      <pre><code class="lang-yaml">include:
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'</code></pre>
+      <p>Replace <code>python</code> with <code>nodejs</code> or <code>go</code> to match your stack.</p>
+
+      <hr>
+
+      <h2>What Gets Installed</h2>
+      <p>The pipeline adds six jobs across two stages:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Job</th>
+            <th>Tool</th>
+            <th>Blocks pipeline?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>cast-scan</code></td>
+            <td><code>cast-secrets</code></td>
+            <td>Gitleaks</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>cast-scan</code></td>
+            <td><code>cast-sast</code></td>
+            <td>Semgrep</td>
+            <td>No (gate evaluates)</td>
+          </tr>
+          <tr>
+            <td><code>cast-scan</code></td>
+            <td><code>cast-sca</code></td>
+            <td>pip-audit / npm audit / govulncheck</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td><code>cast-scan</code></td>
+            <td><code>cast-container</code></td>
+            <td>Trivy</td>
+            <td>No (gate evaluates)</td>
+          </tr>
+          <tr>
+            <td><code>cast-scan</code></td>
+            <td><code>cast-quality</code></td>
+            <td>Ruff / ESLint / staticcheck</td>
+            <td>No (informational)</td>
+          </tr>
+          <tr>
+            <td><code>cast-gate</code></td>
+            <td><code>cast-gate</code></td>
+            <td>conftest</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr>
+
+      <h2>GitLab Security Dashboard Integration</h2>
+      <p>Semgrep results are reported via the <code>sast</code> artifact report type — they appear automatically in GitLab's <strong>Security &amp; Compliance → Security dashboard</strong>.</p>
+      <p>Trivy results are reported via <code>container_scanning</code> — they appear in the <strong>Container Scanning</strong> report in merge requests.</p>
+
+      <hr>
+
+      <h2>Policy Customization</h2>
+      <p>The gate job uses <a href="https://conftest.dev">conftest</a> to evaluate SARIF findings against an OPA Rego policy.</p>
+      <p><strong>Default behavior:</strong> block if any CRITICAL finding (SARIF level <code>error</code>) is found.</p>
+      <p><strong>Override the policy</strong> by creating a <code>policy/</code> directory in your repo:</p>
+      <pre><code>policy/
+  default.rego   ← CAST looks here first</code></pre>
+      <p>Or set the <code>CAST_POLICY</code> CI/CD variable to <code>default</code>, <code>strict</code>, or <code>permissive</code>:</p>
+      <pre><code class="lang-yaml">variables:
+  CAST_POLICY: strict   # block on HIGH + CRITICAL</code></pre>
+      <p>See <a href="policy-reference.html">Policy Reference</a> for policy details.</p>
+
+      <hr>
+
+      <h2>Merge Request Integration</h2>
+      <p>When triggered on a merge request, the pipeline:</p>
+      <ol>
+        <li>Runs all security scans in parallel</li>
+        <li>Reports Semgrep findings inline on the diff</li>
+        <li>Posts container scanning results to the MR security widget</li>
+        <li>Blocks the MR from merging if the gate job fails</li>
+      </ol>
+
+      <hr>
+
+      <h2>Extending the Pipeline</h2>
+      <p>Since the template uses <code>cast-</code> prefixed stage names (<code>cast-scan</code>, <code>cast-gate</code>), you can add your own stages without conflict:</p>
+      <pre><code class="lang-yaml">include:
+  - remote: 'https://raw.githubusercontent.com/castops/cast/main/src/cast_cli/templates/gitlab/python/devsecops.yml'
+
+stages:
+  - cast-scan
+  - cast-gate
+  - test       # your own stage
+  - deploy
+
+my-tests:
+  stage: test
+  script: pytest</code></pre>
+
+      <hr>
+
+      <h2>Troubleshooting</h2>
+
+      <p><strong><code>cast-sca</code> fails with "no requirements file"</strong></p>
+      <p>pip-audit looks for <code>requirements*.txt</code>. If you use <code>pyproject.toml</code> only, add:</p>
+      <pre><code class="lang-yaml">cast-sca:
+  script:
+    - pip install --quiet pip-audit
+    - pip install -e .
+    - pip-audit</code></pre>
+
+      <p><strong><code>cast-container</code> runs but Dockerfile is present</strong></p>
+      <p>The job uses <code>trivy fs</code> (filesystem scan) rather than building and scanning the image, so no Docker daemon is required. To scan a built image, override the job with Docker-in-Docker configuration.</p>
+
+      <p><strong>Gate passes but I see findings in the Security dashboard</strong></p>
+      <p>The gate only blocks on <strong>CRITICAL</strong> findings by default. Set <code>CAST_POLICY: strict</code> to also block on HIGH findings.</p>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
 </body>
 </html>

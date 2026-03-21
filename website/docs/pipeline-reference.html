@@ -2,15 +2,809 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://github.com/castops/cast/blob/main/docs/pipeline-reference.md">
-  <title>CAST — pipeline reference</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Reference — CAST</title>
   <style>
-    body { background: #0d1117; color: #8b949e; font-family: -apple-system, sans-serif;
-           display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    a { color: #58a6ff; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <p>Redirecting to <a href="https://github.com/castops/cast/blob/main/docs/pipeline-reference.md">documentation on GitHub</a>…</p>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../#how-it-works">How it works</a>
+        <a href="../#templates">Templates</a>
+        <a href="getting-started.html">Docs</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="./" class="active">EN</a>
+          <a href="../../zh/">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-label">Documentation</div>
+      <a href="getting-started.html">Getting Started</a>
+      <div class="sidebar-label">Reference</div>
+      <a href="cli-reference.html">CLI Reference</a>
+      <a href="pipeline-reference.html" class="active">Pipeline Reference</a>
+      <a href="policy-reference.html">Policy Reference</a>
+      <div class="sidebar-label">Guides</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html">Security Dashboard</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../">CAST</a>
+        <span class="sep">/</span>
+        <span>Docs</span>
+        <span class="sep">/</span>
+        <span>Pipeline Reference</span>
+      </div>
+
+      <h1>Pipeline Reference</h1>
+      <p>This document provides a complete technical reference for the CAST DevSecOps pipeline.</p>
+
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#job-reference">Job Reference</a>
+          <ul>
+            <li><a href="#1-secrets-detection">1. Secrets Detection</a></li>
+            <li><a href="#2-sast">2. SAST</a></li>
+            <li><a href="#3-sca">3. SCA</a></li>
+            <li><a href="#4-container-security">4. Container Security</a></li>
+            <li><a href="#5-code-quality">5. Code Quality</a></li>
+            <li><a href="#6-security-gate">6. Security Gate</a></li>
+          </ul>
+        </li>
+        <li><a href="#permissions">Permissions</a></li>
+        <li><a href="#trigger-configuration">Trigger Configuration</a></li>
+        <li><a href="#customization-guide">Customization Guide</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ul>
+
+      <hr>
+
+      <h2 id="overview">Overview</h2>
+      <p>The CAST DevSecOps pipeline is a GitHub Actions workflow that runs six jobs on every push and pull request to your main branch.</p>
+      <pre><code>Trigger: push / pull_request / workflow_dispatch
+│
+├── Job 1: secrets        (Gitleaks)       ─┐
+├── Job 2: sast           (Semgrep)         │ Run in parallel
+├── Job 3: sca            (pip-audit)       │
+├── Job 4: container      (Trivy)          ─┘
+├── Job 5: quality        (Ruff)
+│
+└── Job 6: gate           (Security Gate)  ← waits for 1, 2, 3, 5</code></pre>
+
+      <hr>
+
+      <h2 id="job-reference">Job Reference</h2>
+
+      <h3 id="1-secrets-detection">1. Secrets Detection</h3>
+      <p><strong>Job ID:</strong> <code>secrets</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code><br>
+      <strong>Tool:</strong> <a href="https://github.com/gitleaks/gitleaks">Gitleaks v2</a></p>
+
+      <h4>What it does</h4>
+      <p>Scans the <strong>complete git history</strong> of the repository for hardcoded secrets, API keys, tokens, passwords, and other credentials. Gitleaks uses a comprehensive set of regex patterns to detect over 150 types of secrets.</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">secrets:
+  name: Secrets Detection
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # Full history — critical for catching old commits
+    - name: Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}</code></pre>
+
+      <h4>Key settings</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>fetch-depth: 0</code></td>
+            <td>Full history</td>
+            <td>Gitleaks scans all commits, not just the latest</td>
+          </tr>
+          <tr>
+            <td><code>GITHUB_TOKEN</code></td>
+            <td>Auto-provided</td>
+            <td>Used for rate limit avoidance on public repos</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Failure behavior</h4>
+      <ul>
+        <li>Fails if any secret is detected in any commit</li>
+        <li><strong>Blocks merge</strong> via the Security Gate</li>
+      </ul>
+
+      <h4>Suppressing false positives</h4>
+      <p>Add a <code>.gitleaks.toml</code> to your repository root:</p>
+      <pre><code class="lang-toml">[allowlist]
+  description = "Allowlist"
+  regexes = [
+    '''false-positive-pattern''',
+  ]
+  paths = [
+    '''path/to/test/fixtures''',
+  ]</code></pre>
+
+      <hr>
+
+      <h3 id="2-sast">2. SAST</h3>
+      <p><strong>Job ID:</strong> <code>sast</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code> (containerized)<br>
+      <strong>Tool:</strong> <a href="https://semgrep.dev">Semgrep</a></p>
+
+      <h4>What it does</h4>
+      <p>Performs Static Application Security Testing (SAST) — analyzing source code for security vulnerabilities, insecure patterns, and common coding mistakes without executing the code.</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">sast:
+  name: SAST
+  runs-on: ubuntu-latest
+  container:
+    image: semgrep/semgrep
+  steps:
+    - uses: actions/checkout@v4
+    - name: Semgrep scan
+      run: semgrep ci --sarif --output=semgrep.sarif || true
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    - name: Upload to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: semgrep.sarif</code></pre>
+
+      <h4>Key settings</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>semgrep/semgrep</code> container</td>
+            <td>Official image</td>
+            <td>Ensures correct Semgrep version</td>
+          </tr>
+          <tr>
+            <td><code>|| true</code></td>
+            <td>Always exit 0</td>
+            <td>Findings are surfaced via SARIF, not exit code</td>
+          </tr>
+          <tr>
+            <td><code>SEMGREP_APP_TOKEN</code></td>
+            <td>Optional secret</td>
+            <td>Enables cloud rules; falls back to open-source rules</td>
+          </tr>
+          <tr>
+            <td><code>if: always()</code> on upload</td>
+            <td>Always upload</td>
+            <td>Ensures SARIF is uploaded even if scan has findings</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>SARIF Integration</h4>
+      <p>Findings are uploaded to the GitHub Security tab and appear as:</p>
+      <ul>
+        <li>Code scanning alerts on the repository</li>
+        <li>Inline annotations on pull request diffs</li>
+      </ul>
+
+      <h4>Optional: Semgrep Cloud</h4>
+      <p>Set <code>SEMGREP_APP_TOKEN</code> as a GitHub Actions secret to enable:</p>
+      <ul>
+        <li>Additional proprietary rulesets</li>
+        <li>Historical tracking in Semgrep's dashboard</li>
+        <li>Team-wide finding management</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="3-sca">3. SCA</h3>
+      <p><strong>Job ID:</strong> <code>sca</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code><br>
+      <strong>Tool:</strong> <a href="https://pypi.org/project/pip-audit/">pip-audit</a></p>
+
+      <h4>What it does</h4>
+      <p>Performs Software Composition Analysis (SCA) — checking your Python dependencies against known vulnerability databases (PyPI Advisory Database, OSV).</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">sca:
+  name: SCA
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+        cache: pip
+    - name: pip-audit
+      uses: pypa/gh-action-pip-audit@v1
+      with:
+        inputs: requirements*.txt</code></pre>
+
+      <h4>Key settings</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>cache: pip</code></td>
+            <td>Enabled</td>
+            <td>Speeds up subsequent runs</td>
+          </tr>
+          <tr>
+            <td><code>inputs: requirements*.txt</code></td>
+            <td>Glob pattern</td>
+            <td>Scans all requirements files</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Failure behavior</h4>
+      <ul>
+        <li>Fails if any dependency has a known CVE</li>
+        <li><strong>Blocks merge</strong> via the Security Gate</li>
+      </ul>
+
+      <h4>Customization</h4>
+      <p>To scan <code>pyproject.toml</code> dependencies instead of requirements files:</p>
+      <pre><code class="lang-yaml">- uses: pypa/gh-action-pip-audit@v1
+  with:
+    inputs: pyproject.toml</code></pre>
+
+      <hr>
+
+      <h3 id="4-container-security">4. Container Security</h3>
+      <p><strong>Job ID:</strong> <code>container</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code><br>
+      <strong>Tool:</strong> <a href="https://trivy.dev">Trivy</a></p>
+
+      <h4>What it does</h4>
+      <p>Scans your Docker image for known CVEs in OS packages and application dependencies. The job is <strong>automatically skipped</strong> if no <code>Dockerfile</code> is present in the repository.</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">container:
+  name: Container Security
+  runs-on: ubuntu-latest
+  if: hashFiles('Dockerfile') != ''
+  steps:
+    - uses: actions/checkout@v4
+    - name: Build image
+      run: docker build -t cast-scan:${{ github.sha }} .
+    - name: Trivy scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: cast-scan:${{ github.sha }}
+        format: sarif
+        output: trivy.sarif
+        severity: CRITICAL,HIGH
+        exit-code: "0"
+    - name: Upload to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy.sarif</code></pre>
+
+      <h4>Key settings</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Value</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>hashFiles('Dockerfile') != ''</code></td>
+            <td>Conditional</td>
+            <td>Skips gracefully if no Dockerfile exists</td>
+          </tr>
+          <tr>
+            <td><code>severity: CRITICAL,HIGH</code></td>
+            <td>Filter</td>
+            <td>Focuses on actionable findings</td>
+          </tr>
+          <tr>
+            <td><code>exit-code: "0"</code></td>
+            <td>No exit</td>
+            <td>Gate job handles blocking logic</td>
+          </tr>
+          <tr>
+            <td><code>github.sha</code> tag</td>
+            <td>Unique tag</td>
+            <td>Prevents collision between concurrent runs</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Failure behavior</h4>
+      <ul>
+        <li>Does <strong>not</strong> directly block merges — findings are surfaced via SARIF</li>
+        <li>To add blocking behavior, add <code>container</code> to the gate job's <code>needs</code> array</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="5-code-quality">5. Code Quality</h3>
+      <p><strong>Job ID:</strong> <code>quality</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code><br>
+      <strong>Tool:</strong> <a href="https://docs.astral.sh/ruff/">Ruff</a></p>
+
+      <h4>What it does</h4>
+      <p>Runs Ruff — an extremely fast Python linter and formatter — to enforce code style and catch common mistakes.</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">quality:
+  name: Code Quality
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/ruff-action@v1</code></pre>
+
+      <h4>Customization</h4>
+      <p>Ruff reads configuration from <code>pyproject.toml</code> or <code>ruff.toml</code>:</p>
+      <pre><code class="lang-toml"># pyproject.toml
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]</code></pre>
+
+      <h4>Failure behavior</h4>
+      <ul>
+        <li>Fails if any lint errors are found</li>
+        <li><strong>Does not block merges</strong> by default (not in gate's <code>needs</code> array)</li>
+        <li>To block on quality failures, add <code>quality</code> to the gate's blocking condition</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="6-security-gate">6. Security Gate</h3>
+      <p><strong>Job ID:</strong> <code>gate</code><br>
+      <strong>Runner:</strong> <code>ubuntu-latest</code><br>
+      <strong>Dependencies:</strong> <code>secrets</code>, <code>sast</code>, <code>sca</code>, <code>quality</code></p>
+
+      <h4>What it does</h4>
+      <p>Aggregates the results of all security jobs and makes a single pass/fail decision. This is the job that GitHub branch protection rules should target.</p>
+
+      <h4>Configuration</h4>
+      <pre><code class="lang-yaml">gate:
+  name: Security Gate
+  runs-on: ubuntu-latest
+  needs: [secrets, sast, sca, quality]
+  if: always()
+  steps:
+    - name: Evaluate results
+      run: |
+        echo "secrets : ${{ needs.secrets.result }}"
+        echo "sast    : ${{ needs.sast.result }}"
+        echo "sca     : ${{ needs.sca.result }}"
+        echo "quality : ${{ needs.quality.result }}"
+
+        if [[ "${{ needs.secrets.result }}" == "failure" ||
+              "${{ needs.sast.result }}"    == "failure" ||
+              "${{ needs.sca.result }}"     == "failure" ]]; then
+          echo "❌ Security gate failed — merge blocked"
+          exit 1
+        fi
+
+        echo "✅ All checks passed — safe to merge"</code></pre>
+
+      <h4>Gate decision matrix</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Secrets</th>
+            <th>SAST</th>
+            <th>SCA</th>
+            <th>Gate Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>✅ pass</td>
+            <td>✅ pass</td>
+            <td>✅ pass</td>
+            <td>✅ Allow merge</td>
+          </tr>
+          <tr>
+            <td>❌ fail</td>
+            <td>✅ pass</td>
+            <td>✅ pass</td>
+            <td>❌ Block merge</td>
+          </tr>
+          <tr>
+            <td>✅ pass</td>
+            <td>❌ fail</td>
+            <td>✅ pass</td>
+            <td>❌ Block merge</td>
+          </tr>
+          <tr>
+            <td>✅ pass</td>
+            <td>✅ pass</td>
+            <td>❌ fail</td>
+            <td>❌ Block merge</td>
+          </tr>
+          <tr>
+            <td>any</td>
+            <td>any</td>
+            <td>any</td>
+            <td>❌ Block merge (if any of the above fail)</td>
+          </tr>
+        </tbody>
+      </table>
+      <blockquote>Note: Code quality (Ruff) failures are reported but do not block merges in the default configuration.</blockquote>
+
+      <h4>Enforcing the gate with branch protection</h4>
+      <p>To make the Security Gate mandatory for pull requests:</p>
+      <ol>
+        <li>Go to <strong>Settings → Branches → Branch protection rules</strong></li>
+        <li>Add a rule for <code>main</code> (or <code>master</code>)</li>
+        <li>Enable <strong>"Require status checks to pass before merging"</strong></li>
+        <li>Search for and add <strong>"Security Gate"</strong></li>
+        <li>Optionally enable <strong>"Require branches to be up to date before merging"</strong></li>
+      </ol>
+
+      <hr>
+
+      <h2 id="permissions">Permissions</h2>
+      <p>The workflow requests the minimum permissions needed:</p>
+      <pre><code class="lang-yaml">permissions:
+  contents: read          # checkout code
+  security-events: write  # upload SARIF to Security tab
+  actions: read           # read workflow status for gate</code></pre>
+      <p>No write access to repository contents is granted.</p>
+
+      <hr>
+
+      <h2 id="trigger-configuration">Trigger Configuration</h2>
+      <p>The default triggers cover the most common workflow:</p>
+      <pre><code class="lang-yaml">on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:        # manual trigger from GitHub UI</code></pre>
+
+      <h3>Running only on pull requests</h3>
+      <p>To reduce Actions minutes, remove the <code>push</code> trigger:</p>
+      <pre><code class="lang-yaml">on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:</code></pre>
+
+      <h3>Adding schedule-based scanning</h3>
+      <p>To run a full scan daily (e.g., to catch newly disclosed CVEs):</p>
+      <pre><code class="lang-yaml">on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC daily
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]</code></pre>
+
+      <hr>
+
+      <h2 id="customization-guide">Customization Guide</h2>
+
+      <h3>Changing severity thresholds</h3>
+      <p>In the Trivy job, change the <code>severity</code> input:</p>
+      <pre><code class="lang-yaml">severity: CRITICAL,HIGH,MEDIUM   # report medium and above</code></pre>
+
+      <h3>Adding email notifications on gate failure</h3>
+      <pre><code class="lang-yaml">gate:
+  # ... existing config ...
+  steps:
+    - name: Evaluate results
+      # ... existing step ...
+    - name: Notify on failure
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.example.com
+        to: security-team@example.com
+        subject: "CAST Security Gate Failed — ${{ github.repository }}"
+        body: "Security gate failed on ${{ github.ref }}"</code></pre>
+
+      <h3>Skipping checks on specific paths</h3>
+      <pre><code class="lang-yaml">on:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"</code></pre>
+
+      <hr>
+
+      <h2 id="troubleshooting">Troubleshooting</h2>
+
+      <h3>Gitleaks fails on legitimate test fixtures</h3>
+      <p>Add a <code>.gitleaks.toml</code> allowlist (see <a href="#1-secrets-detection">Secrets Detection</a> section).</p>
+
+      <h3>Semgrep SARIF upload fails</h3>
+      <p>Ensure <code>security-events: write</code> is set in <code>permissions</code>. This is required for the <code>github/codeql-action/upload-sarif</code> action.</p>
+
+      <h3>pip-audit finds no requirements file</h3>
+      <p>If you use only <code>pyproject.toml</code>, change the <code>inputs</code> parameter:</p>
+      <pre><code class="lang-yaml">with:
+  inputs: pyproject.toml</code></pre>
+      <p>Or install your package and audit the environment:</p>
+      <pre><code class="lang-yaml">- run: pip install -e .
+- uses: pypa/gh-action-pip-audit@v1</code></pre>
+
+      <h3>Container job is skipped unexpectedly</h3>
+      <p>The <code>hashFiles('Dockerfile')</code> condition evaluates to empty string if the file is in a subdirectory. Change the condition to match your path:</p>
+      <pre><code class="lang-yaml">if: hashFiles('**/Dockerfile') != ''</code></pre>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
 </body>
 </html>

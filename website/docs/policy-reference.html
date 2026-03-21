@@ -2,15 +2,444 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://github.com/castops/cast/blob/main/docs/policy-reference.md">
-  <title>CAST — policy reference</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policy Reference — CAST</title>
   <style>
-    body { background: #0d1117; color: #8b949e; font-family: -apple-system, sans-serif;
-           display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    a { color: #58a6ff; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <p>Redirecting to <a href="https://github.com/castops/cast/blob/main/docs/policy-reference.md">documentation on GitHub</a>…</p>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../#how-it-works">How it works</a>
+        <a href="../#templates">Templates</a>
+        <a href="getting-started.html">Docs</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="./" class="active">EN</a>
+          <a href="../../zh/">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-label">Documentation</div>
+      <a href="getting-started.html">Getting Started</a>
+      <div class="sidebar-label">Reference</div>
+      <a href="cli-reference.html">CLI Reference</a>
+      <a href="pipeline-reference.html">Pipeline Reference</a>
+      <a href="policy-reference.html" class="active">Policy Reference</a>
+      <div class="sidebar-label">Guides</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html">Security Dashboard</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../">CAST</a>
+        <span class="sep">/</span>
+        <span>Docs</span>
+        <span class="sep">/</span>
+        <span>Policy Reference</span>
+      </div>
+
+      <h1>Policy Reference — CAST Security Gate</h1>
+      <p>CAST uses <a href="https://conftest.dev">conftest</a> with OPA Rego policies to evaluate SARIF security findings. This approach replaces hard-coded shell logic with version-controlled, auditable policies.</p>
+
+      <h2>Built-in Policies</h2>
+      <p>Three policies ship with CAST, selectable via the <code>CAST_POLICY</code> variable:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Policy</th>
+            <th>File</th>
+            <th>Blocks on</th>
+            <th>Use case</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>default</code></td>
+            <td><code>policy/default.rego</code></td>
+            <td>CRITICAL only</td>
+            <td>Production pipelines</td>
+          </tr>
+          <tr>
+            <td><code>strict</code></td>
+            <td><code>policy/strict.rego</code></td>
+            <td>CRITICAL + HIGH</td>
+            <td>High-security projects</td>
+          </tr>
+          <tr>
+            <td><code>permissive</code></td>
+            <td><code>policy/permissive.rego</code></td>
+            <td>Never</td>
+            <td>Audit / onboarding</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Selecting a policy</h3>
+      <p><strong>GitHub Actions</strong> — set a repository variable:</p>
+      <pre><code>Settings → Secrets and variables → Actions → Variables → New variable
+Name: CAST_POLICY
+Value: strict</code></pre>
+
+      <p><strong>GitLab CI</strong> — set a CI/CD variable:</p>
+      <pre><code>Settings → CI/CD → Variables → Add variable
+Key: CAST_POLICY
+Value: strict</code></pre>
+
+      <p>If <code>CAST_POLICY</code> is unset, the <code>default</code> policy is used.</p>
+
+      <hr>
+
+      <h2>How the Gate Works</h2>
+      <ol>
+        <li>SARIF-generating jobs (Semgrep, Trivy) upload their output as artifacts.</li>
+        <li>The <code>gate</code> / <code>cast-gate</code> job downloads all <code>cast-sarif-*</code> artifacts.</li>
+        <li>conftest evaluates each SARIF file against the active policy.</li>
+        <li>If any <code>deny</code> rule fires, the gate job exits 1, blocking the merge/MR.</li>
+      </ol>
+      <p>SARIF severity → conftest level mapping:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Tool severity</th>
+            <th>SARIF <code>level</code></th>
+            <th><code>default</code></th>
+            <th><code>strict</code></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CRITICAL</td>
+            <td><code>error</code></td>
+            <td>❌ BLOCK</td>
+            <td>❌ BLOCK</td>
+          </tr>
+          <tr>
+            <td>HIGH</td>
+            <td><code>warning</code></td>
+            <td>✅ PASS</td>
+            <td>❌ BLOCK</td>
+          </tr>
+          <tr>
+            <td>MEDIUM</td>
+            <td><code>warning</code></td>
+            <td>✅ PASS</td>
+            <td>❌ BLOCK</td>
+          </tr>
+          <tr>
+            <td>LOW</td>
+            <td><code>note</code></td>
+            <td>✅ PASS</td>
+            <td>✅ PASS</td>
+          </tr>
+        </tbody>
+      </table>
+      <blockquote>Note: Semgrep maps ERROR→<code>error</code>, WARNING→<code>warning</code>. Trivy maps CRITICAL→<code>error</code>, HIGH→<code>error</code> (when <code>--severity CRITICAL,HIGH</code> flag is used in the scan).</blockquote>
+
+      <hr>
+
+      <h2>Writing a Custom Policy</h2>
+      <p>To override the CAST policy, create a <code>policy/</code> directory in your repository with at least one <code>.rego</code> file. The gate job detects this directory and uses it instead of fetching from the CAST repo.</p>
+      <pre><code>your-repo/
+├── policy/
+│   └── my-policy.rego   ← gates evaluate this
+├── .github/workflows/
+│   └── devsecops.yml</code></pre>
+
+      <p><strong>Example: block only on specific rule IDs</strong></p>
+      <pre><code class="lang-rego">package main
+
+import future.keywords.if
+import future.keywords.in
+
+BLOCKED_RULES := {"sql-injection", "hardcoded-secret", "eval-injection"}
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.ruleId in BLOCKED_RULES
+    msg := sprintf("Blocked rule %s: %s", [result.ruleId, result.message.text])
+}</code></pre>
+
+      <p><strong>Example: block only findings in specific paths</strong></p>
+      <pre><code class="lang-rego">package main
+
+import future.keywords.if
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.level == "error"
+    location := result.locations[_]
+    path := location.physicalLocation.artifactLocation.uri
+    not startswith(path, "test/")   # ignore findings in test code
+    msg := sprintf("CRITICAL in %s: %s", [path, result.message.text])
+}</code></pre>
+
+      <hr>
+
+      <h2>Testing Policies Locally</h2>
+      <p>Install conftest:</p>
+      <pre><code class="lang-bash">brew install conftest           # macOS
+# or
+curl -Lo conftest.tar.gz \
+  https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz
+tar xzf conftest.tar.gz &amp;&amp; sudo mv conftest /usr/local/bin/</code></pre>
+
+      <p>Run against a SARIF file:</p>
+      <pre><code class="lang-bash"># Test with default policy (blocks CRITICAL)
+conftest test path/to/semgrep.sarif --policy policy/default.rego
+
+# Test with strict policy (blocks HIGH + CRITICAL)
+conftest test path/to/trivy.sarif --policy policy/strict.rego
+
+# Test with all policies in directory
+conftest test path/to/*.sarif --policy policy/</code></pre>
+
+      <p>A non-zero exit code means the policy blocked — the same result as in CI.</p>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
 </body>
 </html>
