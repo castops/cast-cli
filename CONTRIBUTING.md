@@ -79,13 +79,46 @@ cast/
 │       ├── detect.py        # Project type auto-detection
 │       ├── install.py       # Template fetching and writing
 │       └── templates/
-│           └── python/
-│               └── devsecops.yml   # Embedded Python workflow template
+│           ├── python/devsecops.yml    # Embedded GitHub Actions templates
+│           ├── nodejs/devsecops.yml
+│           ├── go/devsecops.yml
+│           └── gitlab/
+│               ├── python/devsecops.yml  # Embedded GitLab CI templates
+│               ├── nodejs/devsecops.yml
+│               └── go/devsecops.yml
 ├── templates/
-│   └── python/
-│       └── devsecops.yml   # Source template (must stay in sync with embedded copy)
+│   ├── python/devsecops.yml    # Source GitHub Actions templates
+│   ├── nodejs/devsecops.yml    # (must stay in sync with embedded copies above)
+│   ├── go/devsecops.yml
+│   ├── gitlab/
+│   │   ├── python/devsecops.yml  # Source GitLab CI templates
+│   │   ├── nodejs/devsecops.yml
+│   │   └── go/devsecops.yml
+│   └── github/
+│       └── publish-dashboard.yml   # GitHub Pages dashboard workflow
+├── dashboard/
+│   ├── generate.py         # SARIF → static HTML dashboard generator
+│   └── template.html       # Dashboard HTML/CSS template
+├── policy/
+│   ├── default.rego        # OPA policy: block on CRITICAL
+│   ├── strict.rego         # OPA policy: block on HIGH + CRITICAL
+│   └── permissive.rego     # OPA policy: audit only, never block
+├── docs/
+│   ├── getting-started.md
+│   ├── cli-reference.md
+│   ├── pipeline-reference.md
+│   ├── policy-reference.md
+│   ├── dashboard-guide.md
+│   ├── gitlab-guide.md
+│   └── zh/                 # Chinese documentation
+├── tests/
+│   ├── test_detect.py
+│   ├── test_install.py
+│   ├── test_dashboard.py
+│   └── test_cli.py
 ├── pyproject.toml
 ├── README.md
+├── README.zh.md
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
 └── SECURITY.md
@@ -127,13 +160,14 @@ Use the existing `templates/python/devsecops.yml` as a reference implementation.
 
 ### 2. Register the marker files
 
-In `src/cast_cli/detect.py`, add your stack's marker files to the `MARKERS` dict:
+In `src/cast_cli/detect.py`, add your stack's marker files to the `MARKERS` dict.
+Order matters — entries listed first win in monorepos:
 
 ```python
 MARKERS: dict[str, list[str]] = {
+    "go":     ["go.mod"],
+    "nodejs": ["package.json"],
     "python": ["pyproject.toml", "requirements.txt", "setup.py", "setup.cfg"],
-    "nodejs": ["package.json"],   # example
-    "go":     ["go.mod"],         # example
     "<stack>": ["<marker-file>"],  # add your stack here
 }
 ```
@@ -143,10 +177,8 @@ MARKERS: dict[str, list[str]] = {
 In `src/cast_cli/install.py`, add your stack to the `SUPPORTED` set:
 
 ```python
-SUPPORTED: set[str] = {"python", "<stack>"}
+SUPPORTED: set[str] = {"python", "nodejs", "go", "<stack>"}
 ```
-
-Also remove it from `COMING_SOON` in `src/cast_cli/main.py` if it was listed there.
 
 ### 4. Update documentation
 
@@ -178,8 +210,8 @@ pytest
 pytest --cov=cast_cli
 ```
 
-> The test suite is currently minimal. New contributions should include tests for
-> any new detection logic or CLI behavior.
+> New contributions should include tests for any new detection logic, CLI behavior,
+> or template changes. The test suite covers `detect`, `install`, `dashboard`, and CLI.
 
 ---
 

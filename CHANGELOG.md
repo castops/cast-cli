@@ -9,7 +9,41 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+
+- **Node.js and Go GitHub Actions templates** — production-ready pipelines for both stacks:
+  - Node.js: Gitleaks + Semgrep + npm audit + Trivy + ESLint + conftest gate
+  - Go: Gitleaks + Semgrep + govulncheck + Trivy + staticcheck + conftest gate
+- **GitLab CI templates** — full security parity with GitHub Actions for Python, Node.js, and Go:
+  - Use `cast init --platform gitlab` to generate a `.gitlab-ci.yml`
+  - Findings appear in GitLab's Security dashboard via SARIF artifact reports
+- **Policy as Code (OPA/conftest)** — the security gate now evaluates SARIF findings using
+  Rego policies instead of hardcoded shell logic:
+  - `policy/default.rego` — blocks on CRITICAL findings (default)
+  - `policy/strict.rego` — blocks on HIGH + CRITICAL
+  - `policy/permissive.rego` — audit only, never blocks merges
+  - Custom policies can be placed in a `policy/` directory alongside the workflow
+- **Static HTML security dashboard** — generate a compliance overview from SARIF results:
+  - `dashboard/generate.py`: parses SARIF files and renders a zero-dependency HTML page
+  - Red/green status per scan, collapsible finding details, commit SHA and timestamp
+  - Deploy to GitHub Pages with `templates/github/publish-dashboard.yml`
+- **`cast init --platform gitlab`** — the CLI now supports GitLab CI as a target platform
+- **Auto-detection of CI platform** — `cast init` detects `.gitlab-ci.yml` and `.github/`
+  to determine the platform automatically
+- **Chinese documentation** — full Chinese translation under `docs/zh/` and `README.zh.md`
+- **Test suite** — 65 tests covering project detection, template installation, dashboard
+  generation, and CLI behavior
+
+### Fixed
+
+- **Gitleaks in org repositories** — replaced the GitHub Action (requires paid org license)
+  with direct CLI installation from GitHub releases; works on all repositories for free
+- **SARIF upload without GitHub Advanced Security** — upload steps now use `continue-on-error`
+  so the pipeline does not fail when GHAS is not enabled on the repository
+- **Semgrep SARIF fallback** — added an "Ensure SARIF exists" step so the upload action
+  never fails when Semgrep exits non-zero without creating a SARIF file
+- **Auto-detection priority** — Go and Node.js are now detected before Python, so repositories
+  that use `pyproject.toml` only for tooling (Ruff, pre-commit) are not misidentified
 
 ---
 

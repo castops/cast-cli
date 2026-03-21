@@ -216,8 +216,9 @@ See [docs/policy-reference.md](docs/policy-reference.md) for custom policy autho
 
 ## Pipeline Architecture
 
-The CAST Python pipeline runs **5 parallel security jobs** followed by **1 gate job** that
-controls whether a pull request can be merged.
+Each CAST pipeline runs **5 parallel security jobs** followed by **1 gate job** that
+controls whether a pull request can be merged. The example below shows the Python pipeline;
+Node.js and Go pipelines follow the same structure with stack-appropriate tools.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -304,6 +305,21 @@ templates/github/publish-dashboard.yml → .github/workflows/publish-dashboard.y
 ```
 
 See [docs/dashboard-guide.md](docs/dashboard-guide.md) for setup instructions.
+
+---
+
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | Step-by-step setup for your first pipeline |
+| [CLI Reference](docs/cli-reference.md) | Full `cast` command reference |
+| [Pipeline Reference](docs/pipeline-reference.md) | How each pipeline job works |
+| [GitLab Guide](docs/gitlab-guide.md) | GitLab CI setup and configuration |
+| [Policy Reference](docs/policy-reference.md) | Writing custom OPA/conftest policies |
+| [Dashboard Guide](docs/dashboard-guide.md) | Security dashboard setup and GitHub Pages deployment |
+
+Chinese documentation: [docs/zh/](docs/zh/)
 
 ---
 
