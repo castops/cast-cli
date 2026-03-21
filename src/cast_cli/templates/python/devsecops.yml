@@ -56,6 +56,12 @@ jobs:
         if: always()
         with:
           sarif_file: semgrep.sarif
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cast-sarif-sast
+          path: semgrep.sarif
 
   # ── 3. SCA — Dependency Audit ──────────────────────────────────────────────
   sca:
@@ -94,6 +100,12 @@ jobs:
         if: always()
         with:
           sarif_file: trivy.sarif
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cast-sarif-container
+          path: trivy.sarif
 
   # ── 5. Code Quality ────────────────────────────────────────────────────────
   quality:
@@ -110,18 +122,54 @@ jobs:
     needs: [secrets, sast, sca, quality]
     if: always()
     steps:
-      - name: Evaluate results
+      - uses: actions/checkout@v4
+      - name: Download SARIF results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cast-sarif-*
+          path: sarif-results/
+          merge-multiple: true
+        continue-on-error: true
+      - name: Install conftest
         run: |
-          echo "secrets : ${{ needs.secrets.result }}"
-          echo "sast    : ${{ needs.sast.result }}"
-          echo "sca     : ${{ needs.sca.result }}"
-          echo "quality : ${{ needs.quality.result }}"
+          curl -fsSL -o conftest.tar.gz \
+            https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz
+          tar xzf conftest.tar.gz conftest
+          chmod +x conftest && sudo mv conftest /usr/local/bin/
+      - name: Fetch policy
+        run: |
+          # Use local policy override if present, otherwise fetch from CAST repo
+          if [ ! -d policy ] || [ -z "$(ls -A policy/*.rego 2>/dev/null)" ]; then
+            mkdir -p policy
+            CAST_POLICY="${CAST_POLICY:-default}"
+            curl -fsSL -o policy/active.rego \
+              "https://raw.githubusercontent.com/castops/cast/main/policy/${CAST_POLICY}.rego"
+          fi
+        env:
+          CAST_POLICY: ${{ vars.CAST_POLICY }}
+      - name: Evaluate policy
+        run: |
+          GATE_FAILED=0
 
-          if [[ "${{ needs.secrets.result }}" == "failure" ||
-                "${{ needs.sast.result }}"    == "failure" ||
-                "${{ needs.sca.result }}"     == "failure" ]]; then
-            echo "❌ Security gate failed — merge blocked"
+          # Run conftest on any SARIF files collected
+          if compgen -G "sarif-results/*.sarif" > /dev/null 2>&1; then
+            conftest test sarif-results/*.sarif --policy policy/ \
+              || GATE_FAILED=1
+          fi
+
+          # Check job results for non-SARIF tools
+          if [[ "${{ needs.secrets.result }}" == "failure" ]]; then
+            echo "❌ Secrets Detection failed"
+            GATE_FAILED=1
+          fi
+          if [[ "${{ needs.sca.result }}" == "failure" ]]; then
+            echo "❌ SCA (pip-audit) failed"
+            GATE_FAILED=1
+          fi
+
+          if [ "$GATE_FAILED" -eq 1 ]; then
+            echo "❌ Security gate blocked merge"
             exit 1
           fi
 
-          echo "✅ All checks passed — safe to merge"
+          echo "✅ All security checks passed — safe to merge"

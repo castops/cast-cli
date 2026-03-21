@@ -1,0 +1,126 @@
+# CAST — DevSecOps Pipeline for Go (GitLab CI)
+# https://github.com/castops/cast
+#
+# Usage — include this pipeline in your .gitlab-ci.yml:
+#   include:
+#     - remote: 'https://raw.githubusercontent.com/castops/cast/main/templates/gitlab/go/devsecops.yml'
+#
+# Includes:
+#   1. Secrets Detection  — Gitleaks
+#   2. SAST               — Semgrep
+#   3. SCA                — govulncheck
+#   4. Container Security — Trivy  (skipped if no Dockerfile)
+#   5. Code Quality       — staticcheck
+#   6. Security Gate      — conftest policy evaluation on SARIF findings
+
+stages:
+  - cast-scan
+  - cast-gate
+
+# ── 1. Secrets Detection ────────────────────────────────────────────────────
+cast-secrets:
+  stage: cast-scan
+  image: zricethezav/gitleaks:latest
+  script:
+    - gitleaks detect --source . --verbose
+  rules:
+    - when: always
+
+# ── 2. SAST ─────────────────────────────────────────────────────────────────
+cast-sast:
+  stage: cast-scan
+  image: semgrep/semgrep:latest
+  script:
+    - semgrep ci --sarif --output=semgrep.sarif || true
+  artifacts:
+    when: always
+    paths:
+      - semgrep.sarif
+    reports:
+      sast: semgrep.sarif
+  rules:
+    - when: always
+
+# ── 3. SCA — Vulnerability Check ────────────────────────────────────────────
+cast-sca:
+  stage: cast-scan
+  image: golang:latest
+  script:
+    - go install golang.org/x/vuln/cmd/govulncheck@latest
+    - govulncheck ./...
+  rules:
+    - when: always
+
+# ── 4. Container Security ────────────────────────────────────────────────────
+cast-container:
+  stage: cast-scan
+  image: aquasec/trivy:latest
+  script:
+    - |
+      if [ -f Dockerfile ]; then
+        trivy fs --format sarif --output trivy.sarif --severity CRITICAL,HIGH . || true
+      else
+        echo "No Dockerfile found — skipping container scan"
+        echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[]}' > trivy.sarif
+      fi
+  artifacts:
+    when: always
+    paths:
+      - trivy.sarif
+    reports:
+      container_scanning: trivy.sarif
+  rules:
+    - when: always
+
+# ── 5. Code Quality ──────────────────────────────────────────────────────────
+cast-quality:
+  stage: cast-scan
+  image: golang:latest
+  script:
+    - go install honnef.co/go/tools/cmd/staticcheck@latest
+    - staticcheck ./...
+  allow_failure: true
+  rules:
+    - when: always
+
+# ── 6. Security Gate ─────────────────────────────────────────────────────────
+cast-gate:
+  stage: cast-gate
+  image: alpine:latest
+  needs:
+    - job: cast-secrets
+      artifacts: false
+    - job: cast-sast
+      artifacts: true
+    - job: cast-sca
+      artifacts: false
+    - job: cast-container
+      artifacts: true
+    - job: cast-quality
+      artifacts: false
+  when: always
+  script:
+    - apk add --no-cache curl tar
+    - |
+      curl -fsSL -o conftest.tar.gz \
+        https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz
+      tar xzf conftest.tar.gz conftest
+      chmod +x conftest && mv conftest /usr/local/bin/
+    - |
+      # Use local policy override if present, otherwise fetch from CAST repo
+      if [ ! -d policy ] || [ -z "$(ls -A policy/*.rego 2>/dev/null)" ]; then
+        mkdir -p policy
+        CAST_POLICY="${CAST_POLICY:-default}"
+        curl -fsSL -o policy/active.rego \
+          "https://raw.githubusercontent.com/castops/cast/main/policy/${CAST_POLICY}.rego"
+      fi
+    - |
+      SARIF_FILES=""
+      for f in semgrep.sarif trivy.sarif; do
+        [ -f "$f" ] && SARIF_FILES="$SARIF_FILES $f"
+      done
+      if [ -n "$SARIF_FILES" ]; then
+        conftest test $SARIF_FILES --policy policy/ \
+          || { echo "❌ Policy violations found — pipeline blocked"; exit 1; }
+      fi
+      echo "✅ Security gate passed"

@@ -1,0 +1,83 @@
+# CAST — Publish Security Dashboard to GitHub Pages
+# https://github.com/castops/cast
+#
+# This workflow runs after the main CAST DevSecOps pipeline completes,
+# collects all SARIF artifacts, generates an HTML dashboard, and deploys
+# it to GitHub Pages.
+#
+# Setup:
+#   1. Enable GitHub Pages: Settings → Pages → Source: GitHub Actions
+#   2. Add this workflow to .github/workflows/publish-dashboard.yml
+
+name: CAST Publish Dashboard
+
+on:
+  workflow_run:
+    workflows: ["CAST DevSecOps"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download SARIF artifacts from triggering run
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: cast-sarif-*
+          path: sarif-results/
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Download SARIF artifacts (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cast-sarif-*
+          path: sarif-results/
+          merge-multiple: true
+        continue-on-error: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate dashboard
+        run: |
+          COMMIT="${{ github.event.workflow_run.head_sha || github.sha }}"
+          python dashboard/generate.py \
+            --sarif-dir sarif-results \
+            --output _site/index.html \
+            --commit "$COMMIT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: generate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

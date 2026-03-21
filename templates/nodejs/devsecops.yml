@@ -1,13 +1,13 @@
-# CAST — DevSecOps Pipeline for Python
+# CAST — DevSecOps Pipeline for Node.js
 # https://github.com/castops/cast
 #
 # Includes:
 #   1. Secrets Detection  — Gitleaks
 #   2. SAST               — Semgrep
-#   3. SCA                — pip-audit
+#   3. SCA                — npm audit
 #   4. Container Security — Trivy  (skipped if no Dockerfile)
-#   5. Code Quality       — Ruff
-#   6. Security Gate      — blocks merge on critical findings
+#   5. Code Quality       — ESLint
+#   6. Security Gate      — conftest policy evaluation on SARIF findings
 
 name: CAST DevSecOps
 
@@ -47,7 +47,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Semgrep scan
-        # SEMGREP_APP_TOKEN is optional — falls back to open-source rules
         run: semgrep ci --sarif --output=semgrep.sarif || true
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
@@ -69,14 +68,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.x"
-          cache: pip
-      - name: pip-audit
-        uses: pypa/gh-action-pip-audit@v1
-        with:
-          inputs: requirements*.txt
+          node-version: "lts/*"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+      - name: npm audit
+        run: npm audit --audit-level=high
 
   # ── 4. Container Security ──────────────────────────────────────────────────
   container:
@@ -113,7 +112,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/ruff-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+      - name: ESLint
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
 
   # ── 6. Security Gate ───────────────────────────────────────────────────────
   gate:
@@ -163,7 +169,7 @@ jobs:
             GATE_FAILED=1
           fi
           if [[ "${{ needs.sca.result }}" == "failure" ]]; then
-            echo "❌ SCA (pip-audit) failed"
+            echo "❌ SCA (npm audit) failed"
             GATE_FAILED=1
           fi
 

@@ -7,13 +7,13 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from cast_cli.detect import detect_project
+from cast_cli.detect import detect_platform, detect_project
 from cast_cli.install import (
     already_exists,
     fetch_template,
+    get_workflow_path,
     is_supported,
     write_template,
-    WORKFLOW_PATH,
 )
 
 app = typer.Typer(
@@ -27,9 +27,11 @@ console = Console()
 
 SUPPORTED_TYPES = {
     "python": "Python (Gitleaks + Semgrep + pip-audit + Trivy + Ruff)",
+    "nodejs": "Node.js (Gitleaks + Semgrep + npm audit + Trivy + ESLint)",
+    "go":     "Go (Gitleaks + Semgrep + govulncheck + Trivy + staticcheck)",
 }
 
-COMING_SOON = ["nodejs", "go", "docker"]
+COMING_SOON = ["docker"]
 
 
 @app.command()
@@ -50,7 +52,11 @@ def init(
     ),
     project_type: Optional[str] = typer.Option(
         None, "--type", "-t",
-        help="Project type to use (python). Auto-detected if omitted.",
+        help="Project type (python/nodejs/go). Auto-detected if omitted.",
+    ),
+    platform: Optional[str] = typer.Option(
+        None, "--platform", "-p",
+        help="CI platform (github/gitlab). Auto-detected if omitted.",
     ),
 ) -> None:
     """Initialize a DevSecOps pipeline for your project."""
@@ -60,7 +66,7 @@ def init(
         border_style="cyan",
     ))
 
-    # ── detect ────────────────────────────────────────────────────────────────
+    # ── detect project type ────────────────────────────────────────────────────
     detected = project_type or detect_project(Path("."))
 
     if detected is None:
@@ -73,7 +79,7 @@ def init(
     if detected in COMING_SOON:
         console.print(
             f"[yellow]{detected}[/yellow] support is coming soon. "
-            "Only [bold]python[/bold] is available today."
+            "Available types: " + ", ".join(f"[bold]{t}[/bold]" for t in SUPPORTED_TYPES)
         )
         raise typer.Exit(1)
 
@@ -83,30 +89,48 @@ def init(
 
     console.print(f"Detected project type: [bold green]{detected}[/bold green]")
 
+    # ── detect CI platform ─────────────────────────────────────────────────────
+    resolved_platform = platform or detect_platform(Path("."))
+    if resolved_platform not in ("github", "gitlab"):
+        console.print(f"[red]Unsupported platform:[/red] {resolved_platform} (use github or gitlab)")
+        raise typer.Exit(1)
+
+    console.print(f"Target platform:      [bold green]{resolved_platform}[/bold green]")
+
     # ── check existing ────────────────────────────────────────────────────────
-    if already_exists() and not force:
+    workflow_path = get_workflow_path(resolved_platform)
+    if already_exists(resolved_platform) and not force:
         console.print(
-            f"[yellow]Workflow already exists:[/yellow] {WORKFLOW_PATH}\n"
+            f"[yellow]Workflow already exists:[/yellow] {workflow_path}\n"
             "Use [bold]--force[/bold] to overwrite."
         )
         raise typer.Exit(1)
 
     # ── fetch + write ─────────────────────────────────────────────────────────
-    console.print("Downloading template...", end=" ")
+    console.print("Installing template...", end=" ")
 
     try:
-        content = fetch_template(detected)
+        content = fetch_template(detected, resolved_platform)
     except Exception as e:
-        console.print(f"\n[red]Failed to download template:[/red] {e}")
+        console.print(f"\n[red]Failed to load template:[/red] {e}")
         raise typer.Exit(1)
 
-    write_template(content)
+    write_template(content, resolved_platform)
 
     console.print("[green]done[/green]")
-    console.print(f"\n[bold green]✓[/bold green] Created [cyan]{WORKFLOW_PATH}[/cyan]")
-    console.print(
-        "\nCommit and push to activate your DevSecOps pipeline:\n"
-        "  [bold]git add .github/workflows/devsecops.yml[/bold]\n"
-        "  [bold]git commit -m 'ci: add CAST DevSecOps pipeline'[/bold]\n"
-        "  [bold]git push[/bold]"
-    )
+    console.print(f"\n[bold green]✓[/bold green] Created [cyan]{workflow_path}[/cyan]")
+
+    if resolved_platform == "gitlab":
+        console.print(
+            "\nCommit and push to activate your DevSecOps pipeline:\n"
+            "  [bold]git add .gitlab-ci.yml[/bold]\n"
+            "  [bold]git commit -m 'ci: add CAST DevSecOps pipeline'[/bold]\n"
+            "  [bold]git push[/bold]"
+        )
+    else:
+        console.print(
+            "\nCommit and push to activate your DevSecOps pipeline:\n"
+            f"  [bold]git add {workflow_path}[/bold]\n"
+            "  [bold]git commit -m 'ci: add CAST DevSecOps pipeline'[/bold]\n"
+            "  [bold]git push[/bold]"
+        )
