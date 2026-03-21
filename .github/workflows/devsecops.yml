@@ -35,8 +35,11 @@ jobs:
           fetch-depth: 0  # full history so Gitleaks can scan all commits
       - name: Install Gitleaks
         run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh \
-            | sh -s -- -b /usr/local/bin v8.27.2
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.27.2/gitleaks_8.27.2_linux_x64.tar.gz \
+            -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
       - name: Gitleaks scan
         run: gitleaks detect --source . --verbose --redact
 
@@ -60,6 +63,7 @@ jobs:
       - name: Upload to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true  # requires GitHub Advanced Security; skip gracefully if not enabled
         with:
           sarif_file: semgrep.sarif
 
@@ -108,6 +112,7 @@ jobs:
       - name: Upload to GitHub Security tab
         if: steps.check_dockerfile.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true  # requires GitHub Advanced Security; skip gracefully if not enabled
         with:
           sarif_file: trivy.sarif
 
