@@ -81,12 +81,22 @@ jobs:
   container:
     name: Container Security
     runs-on: ubuntu-latest
-    if: hashFiles('Dockerfile') != ''  # skip if no Dockerfile
     steps:
       - uses: actions/checkout@v4
+      - name: Check for Dockerfile
+        id: check_dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "No Dockerfile found — skipping container scan"
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
       - name: Build image
+        if: steps.check_dockerfile.outputs.found == 'true'
         run: docker build -t cast-scan:${{ github.sha }} .
       - name: Trivy scan
+        if: steps.check_dockerfile.outputs.found == 'true'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: cast-scan:${{ github.sha }}
@@ -95,13 +105,13 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: "0"  # gate handles blocking, not trivy directly
       - name: Upload to GitHub Security tab
+        if: steps.check_dockerfile.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
           sarif_file: trivy.sarif
       - name: Upload SARIF artifact
+        if: steps.check_dockerfile.outputs.found == 'true'
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: cast-sarif-container
           path: trivy.sarif
