@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**复制。粘贴。生产级 DevSecOps 流水线。**
+**一个工程师的标准，覆盖每个团队的流水线。**
 
 [![PyPI version](https://img.shields.io/pypi/v/cast-cli.svg)](https://pypi.org/project/cast-cli/)
 [![Python](https://img.shields.io/pypi/pyversions/cast-cli.svg)](https://pypi.org/project/cast-cli/)
@@ -15,8 +15,8 @@
 
 ---
 
-CAST 是一套经过生产验证的 CI/CD 工作流模板集合，同时支持 **GitHub Actions** 和 **GitLab CI**。
-一行命令，开箱即用，无需成为 DevSecOps 专家。
+CAST 是一套 DevSecOps 治理工具包，同时支持 **GitHub Actions** 和 **GitLab CI**。
+让一位 DevOps 工程师的标准，无需亲自审每个 PR，也能覆盖所有团队的流水线。
 
 ## 目录
 
@@ -34,10 +34,14 @@ CAST 是一套经过生产验证的 CI/CD 工作流模板集合，同时支持 *
 
 ## 为什么选择 CAST
 
-大多数团队使用 6～20 个安全工具，却没有统一的流水线。
-从零搭建 DevSecOps 意味着每个项目都要花几天时间研究、配置和调试。
+问题不是团队缺少安全工具，而是 **一个 DevOps 工程师的标准，无法覆盖 N 个团队的流水线**。
 
-CAST 将最佳实践打包成即用的工作流模板，第一天就能拥有生产级流水线。
+典型场景：DevOps 工程师为一个项目精心搭建了安全合规的流水线，其他团队却在自行创建 CI 配置——
+往往由 AI 生成，往往没有经过安全验证，"能跑就提交"。DevOps 工程师没有精力逐个 PR 审查，
+流水线质量参差不齐，安全隐患悄然累积。
+
+CAST 就是为这个规模化问题而生的治理层。不是"没有 DevOps 专家也能用"，
+而是"DevSecOps 标准自我执行——不再依赖你亲自盯每个仓库"。
 
 - **零配置** — 自动检测技术栈和 CI 平台，一键写入工作流文件
 - **安全优先** — 开箱即含秘密扫描、SAST、SCA 和容器扫描
@@ -314,10 +318,12 @@ templates/github/publish-dashboard.yml → .github/workflows/publish-dashboard.y
 
 ## 设计理念
 
-> 让非专家立即专业。
+> 一个工程师的标准，覆盖每个团队的流水线。
 
-CAST 不是教程，而是 DevSecOps 最佳实践的可执行形式——
-有主见、生产就绪，由每天运行这些流水线的人维护。
+CAST 是规模化问题的答案：一个 DevOps 工程师无法亲自审查每个团队的每条 CI/CD 流水线。
+CAST 将专家验证的标准打包为可执行模板和策略门禁——让标准由流水线自我执行，而不依赖 PR 审查。
+
+AI 可以生成一条能跑的流水线。CAST 保证一条合规的流水线。
 
 ---
 

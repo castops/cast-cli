@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Copy. Paste. Production-grade DevSecOps pipeline.**
+**One engineer's standards. Every team's pipeline.**
 
 [![PyPI version](https://img.shields.io/pypi/v/cast-cli.svg)](https://pypi.org/project/cast-cli/)
 [![Python](https://img.shields.io/pypi/pyversions/cast-cli.svg)](https://pypi.org/project/cast-cli/)
@@ -15,8 +15,9 @@ English | [中文](README.zh.md)
 
 ---
 
-CAST is a collection of battle-tested CI/CD workflow templates for GitHub Actions and GitLab CI —
-so you can get a complete, security-hardened pipeline on day one, without being a DevSecOps expert.
+CAST is a DevSecOps governance toolkit for GitHub Actions and GitLab CI —
+so a single DevOps engineer can enforce pipeline standards across every team,
+without personally reviewing every repository.
 
 ## Table of Contents
 
@@ -33,11 +34,17 @@ so you can get a complete, security-hardened pipeline on day one, without being 
 
 ## Why CAST
 
-Most teams use 6–20 security tools but have no unified pipeline. Setting up DevSecOps from
-scratch means days of research, configuration, and debugging — for every project, every time.
+The problem isn't that teams lack security tools. It's that **one DevOps engineer's standards
+can't reach every team's pipeline**.
 
-CAST packages the best practices into ready-to-use GitHub Actions workflows, so you get a
-production-grade pipeline on day one.
+The typical situation: a DevOps engineer defines a secure, policy-compliant pipeline for one
+project. Other teams write their own — often AI-generated, often untested against security
+standards, always "good enough to push." The DevOps engineer can't review every PR across
+every repository. Pipeline quality varies. Security gaps accumulate silently.
+
+CAST is the governance layer that changes this. It's not "DevSecOps for teams with no DevOps
+expertise." It's "DevSecOps standards that enforce themselves — without your personal attention
+on every repository."
 
 - **Zero configuration** — auto-detects your stack and CI platform, writes the workflow file
 - **Security-first** — secrets scanning, SAST, SCA, and container scanning out of the box
@@ -343,10 +350,13 @@ To report a security vulnerability in CAST itself, see [SECURITY.md](SECURITY.md
 
 ## Philosophy
 
-> Make non-experts immediately professional.
+> One engineer's standards. Every team's pipeline.
 
-CAST is not a tutorial. It is the executable version of DevSecOps best practices —
-opinionated, production-ready, and maintained by people who run these pipelines every day.
+CAST is the answer to a scaling problem: a single DevOps engineer cannot personally review
+every CI/CD pipeline across every team. CAST packages expert-validated standards as executable
+templates and policy gates — so the standard is enforced by the pipeline itself, not by PR review.
+
+AI can generate a pipeline that runs. CAST enforces a pipeline that complies.
 
 ---
 
