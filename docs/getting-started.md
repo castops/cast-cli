@@ -15,7 +15,7 @@ No external accounts, tokens, or SaaS subscriptions are required.
 ## Step 1 — Install the CLI
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 Verify the installation:

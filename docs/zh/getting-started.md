@@ -14,7 +14,7 @@
 ## 第一步 — 安装 CLI
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 验证安装：

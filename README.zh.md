@@ -4,8 +4,8 @@
 
 **一个工程师的标准，覆盖每个团队的流水线。**
 
-[![PyPI version](https://img.shields.io/pypi/v/cast-cli.svg)](https://pypi.org/project/cast-cli/)
-[![Python](https://img.shields.io/pypi/pyversions/cast-cli.svg)](https://pypi.org/project/cast-cli/)
+[![PyPI version](https://img.shields.io/pypi/v/castops.svg)](https://pypi.org/project/castops/)
+[![Python](https://img.shields.io/pypi/pyversions/castops.svg)](https://pypi.org/project/castops/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/castops/cast/actions)
 
@@ -74,7 +74,7 @@ CAST 就是为这个规模化问题而生的治理层。不是"没有 DevOps 专
 ### 方式 A — CLI（推荐）
 
 ```bash
-pip install cast-cli
+pip install castops
 cast init
 ```
 
@@ -117,7 +117,7 @@ include:
 ### 安装
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 ### 命令
@@ -170,7 +170,7 @@ cast init --force
 
 #### `cast version`
 
-显示已安装的 `cast-cli` 版本。
+显示已安装的 `castops` 版本。
 
 ```bash
 cast version

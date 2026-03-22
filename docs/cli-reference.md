@@ -17,7 +17,7 @@ Complete reference for the `cast` command-line interface.
 ## Installation
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 **Requirements:** Python 3.9 or higher.
@@ -138,7 +138,7 @@ exits with an error and prompts you to use `--type`.
 
 ### cast version
 
-Display the installed version of `cast-cli`.
+Display the installed version of `castops`.
 
 #### Synopsis
 

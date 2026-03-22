@@ -16,7 +16,7 @@
 ## 安装
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 **要求：** Python 3.9 或更高版本。
@@ -142,7 +142,7 @@ cast init -f
 
 ### cast version
 
-显示已安装的 `cast-cli` 版本。
+显示已安装的 `castops` 版本。
 
 #### 语法
 

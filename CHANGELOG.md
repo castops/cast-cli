@@ -51,7 +51,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- **`cast` CLI** — new `cast-cli` Python package installable via `pip install cast-cli`
+- **`cast` CLI** — new `castops` Python package installable via `pip install castops`
   - `cast init` command: writes a DevSecOps workflow to `.github/workflows/devsecops.yml`
   - `cast version` command: displays the installed package version
   - Auto-detection of project type from marker files (`pyproject.toml`, `requirements.txt`, etc.)

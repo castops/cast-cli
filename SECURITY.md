@@ -31,7 +31,7 @@ You can expect:
 
 ### In scope
 
-- Vulnerabilities in `cast-cli` source code
+- Vulnerabilities in `castops` source code
 - Security misconfigurations in the workflow templates that could expose secrets or
   bypass security checks
 - Supply-chain issues with pinned third-party actions used in templates

@@ -8,7 +8,7 @@ generate a `.gitlab-ci.yml`, or include a remote template directly.
 ### Option A — CLI
 
 ```bash
-pip install cast-cli
+pip install castops
 cast init --platform gitlab
 ```
 

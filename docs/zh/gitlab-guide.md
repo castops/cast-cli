@@ -8,7 +8,7 @@ CAST 同时支持 GitLab CI 和 GitHub Actions，安全覆盖面完全一致。
 ### 方式 A — CLI
 
 ```bash
-pip install cast-cli
+pip install castops
 cast init --platform gitlab
 ```
 

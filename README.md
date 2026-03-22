@@ -4,8 +4,8 @@
 
 **One engineer's standards. Every team's pipeline.**
 
-[![PyPI version](https://img.shields.io/pypi/v/cast-cli.svg)](https://pypi.org/project/cast-cli/)
-[![Python](https://img.shields.io/pypi/pyversions/cast-cli.svg)](https://pypi.org/project/cast-cli/)
+[![PyPI version](https://img.shields.io/pypi/v/castops.svg)](https://pypi.org/project/castops/)
+[![Python](https://img.shields.io/pypi/pyversions/castops.svg)](https://pypi.org/project/castops/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/castops/cast/actions)
 
@@ -77,7 +77,7 @@ accounts, no SaaS dependencies.
 ### Option A — CLI (Recommended)
 
 ```bash
-pip install cast-cli
+pip install castops
 cast init
 ```
 
@@ -123,7 +123,7 @@ The `cast` CLI is the fastest way to add a DevSecOps pipeline to any project.
 ### Installation
 
 ```bash
-pip install cast-cli
+pip install castops
 ```
 
 ### Commands
@@ -180,7 +180,7 @@ CAST detects your project type and CI platform by looking for marker files:
 
 #### `cast version`
 
-Display the installed version of `cast-cli`.
+Display the installed version of `castops`.
 
 ```bash
 cast version

@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cast-cli"
+name = "castops"
 dynamic = ["version"]
-description = "CAST — CI/CD Automation & Security Toolkit"
+description = "CAST — DevSecOps governance toolkit for GitHub Actions and GitLab CI"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.9"
