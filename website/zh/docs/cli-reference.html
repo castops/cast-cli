@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLI 参考 — CAST</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../../zh/">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../../zh/#how-it-works">工作原理</a>
+        <a href="../../zh/#templates">模板</a>
+        <a href="getting-started.html">文档</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">更新日志</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="../../docs/cli-reference.html">EN</a>
+          <a href="./cli-reference.html" class="active">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-label">文档</div>
+      <a href="getting-started.html">快速入门</a>
+      <div class="sidebar-label">参考</div>
+      <a href="cli-reference.html" class="active">CLI 参考</a>
+      <a href="pipeline-reference.html">流水线参考</a>
+      <a href="policy-reference.html">策略参考</a>
+      <div class="sidebar-label">指南</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html">安全看板</a>
+      <a href="plugin-guide.html">插件指南</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../../zh/">CAST</a>
+        <span class="sep">/</span>
+        <span>文档</span>
+        <span class="sep">/</span>
+        <span>CLI 参考</span>
+      </div>
+
+      <h1>CLI 参考</h1>
+      <p><code>cast</code> 命令行界面的完整参考文档。</p>
+
+      <h2>目录</h2>
+      <ul>
+        <li><a href="#installation">安装</a></li>
+        <li><a href="#global-options">全局选项</a></li>
+        <li><a href="#commands">命令</a>
+          <ul>
+            <li><a href="#cast-init">cast init</a></li>
+            <li><a href="#cast-version">cast version</a></li>
+          </ul>
+        </li>
+        <li><a href="#exit-codes">退出码</a></li>
+        <li><a href="#environment-variables">环境变量</a></li>
+      </ul>
+
+      <hr>
+
+      <h2 id="installation">安装</h2>
+      <pre><code class="lang-bash">pip install cast-cli</code></pre>
+      <p><strong>要求：</strong>Python 3.9 或更高版本。</p>
+      <p>安装完成后，<code>cast</code> 命令即可在您的 PATH 中使用。</p>
+      <pre><code class="lang-bash">cast --help</code></pre>
+
+      <hr>
+
+      <h2 id="global-options">全局选项</h2>
+      <pre><code>Options:
+  --help    Show help message and exit.</code></pre>
+      <p>不带参数运行 <code>cast</code> 将显示帮助信息。</p>
+
+      <hr>
+
+      <h2 id="commands">命令</h2>
+
+      <h3 id="cast-init">cast init</h3>
+      <p>在当前目录中初始化 DevSecOps 流水线。</p>
+
+      <h4>语法</h4>
+      <pre><code>cast init [OPTIONS]</code></pre>
+
+      <h4>说明</h4>
+      <p>将生产就绪的 GitHub Actions 工作流写入 <code>.github/workflows/devsecops.yml</code>。</p>
+      <p>该命令执行以下步骤：</p>
+      <ol>
+        <li>从标记文件检测项目类型（或使用 <code>--type</code> 指定）</li>
+        <li>检查工作流文件是否已存在</li>
+        <li>读取对应项目类型的内嵌模板</li>
+        <li>若 <code>.github/workflows/</code> 不存在则创建该目录</li>
+        <li>写入工作流文件</li>
+      </ol>
+
+      <h4>选项</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>选项</th>
+            <th>缩写</th>
+            <th>类型</th>
+            <th>默认值</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>--force</code></td>
+            <td><code>-f</code></td>
+            <td>标志</td>
+            <td><code>false</code></td>
+            <td>覆盖已存在的工作流文件</td>
+          </tr>
+          <tr>
+            <td><code>--type</code></td>
+            <td><code>-t</code></td>
+            <td>字符串</td>
+            <td>（自动检测）</td>
+            <td>项目类型：<code>python</code></td>
+          </tr>
+          <tr>
+            <td><code>--help</code></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>显示帮助并退出</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>示例</h4>
+      <p><strong>自动检测项目类型：</strong></p>
+      <pre><code class="lang-bash">cd my-python-project
+cast init</code></pre>
+      <p>输出：</p>
+      <pre><code>╭──────────────────────────────────────────────────╮
+│ CAST — CI/CD Automation &amp; Security Toolkit        │
+╰──────────────────────────────────────────────────╯
+Detected project type: python
+Downloading template... done
+
+✓ Created .github/workflows/devsecops.yml
+
+Commit and push to activate your DevSecOps pipeline:
+  git add .github/workflows/devsecops.yml
+  git commit -m 'ci: add CAST DevSecOps pipeline'
+  git push</code></pre>
+
+      <p><strong>手动指定项目类型：</strong></p>
+      <pre><code class="lang-bash">cast init --type python</code></pre>
+
+      <p><strong>覆盖已存在的工作流：</strong></p>
+      <pre><code class="lang-bash">cast init --force
+# or
+cast init -f</code></pre>
+
+      <h4>自动检测逻辑</h4>
+      <p>CAST 扫描当前目录中的以下标记文件：</p>
+      <table>
+        <thead>
+          <tr>
+            <th>项目类型</th>
+            <th>标记文件</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>python</code></td>
+            <td><code>pyproject.toml</code>, <code>requirements.txt</code>, <code>setup.py</code>, <code>setup.cfg</code></td>
+            <td>✅ 可用</td>
+          </tr>
+          <tr>
+            <td><code>nodejs</code></td>
+            <td><code>package.json</code></td>
+            <td>🔜 即将推出</td>
+          </tr>
+          <tr>
+            <td><code>go</code></td>
+            <td><code>go.mod</code></td>
+            <td>🔜 即将推出</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>第一个匹配的项目类型优先生效。若未找到标记文件，<code>cast init</code> 将退出并提示使用 <code>--type</code>。</p>
+
+      <h4>错误情况</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>错误</th>
+            <th>原因</th>
+            <th>解决方法</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Could not detect project type.</code></td>
+            <td>未找到标记文件</td>
+            <td>使用 <code>--type python</code></td>
+          </tr>
+          <tr>
+            <td><code>Workflow already exists</code></td>
+            <td><code>.github/workflows/devsecops.yml</code> 已存在</td>
+            <td>使用 <code>--force</code> 覆盖</td>
+          </tr>
+          <tr>
+            <td><code>Unsupported project type</code></td>
+            <td>类型不被识别</td>
+            <td>使用受支持的类型</td>
+          </tr>
+          <tr>
+            <td><code>nodejs support is coming soon</code></td>
+            <td>该技术栈尚未可用</td>
+            <td>目前请使用 <code>python</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr>
+
+      <h3 id="cast-version">cast version</h3>
+      <p>显示已安装的 <code>cast-cli</code> 版本。</p>
+
+      <h4>语法</h4>
+      <pre><code>cast version</code></pre>
+
+      <h4>说明</h4>
+      <p>从已安装的包元数据中读取版本号并输出。</p>
+
+      <h4>示例</h4>
+      <pre><code class="lang-bash">cast version
+# cast 0.1.0</code></pre>
+
+      <hr>
+
+      <h2 id="exit-codes">退出码</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>退出码</th>
+            <th>含义</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>0</code></td>
+            <td>成功</td>
+          </tr>
+          <tr>
+            <td><code>1</code></td>
+            <td>错误（检测失败、不支持的类型、文件已存在、模板错误）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr>
+
+      <h2 id="environment-variables">环境变量</h2>
+      <p><code>cast</code> CLI 不直接读取任何环境变量。生成的工作流所需的环境变量（如 <code>SEMGREP_APP_TOKEN</code>）应配置为 GitHub Actions 密钥，而非本地环境变量。</p>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
+</body>
+</html>

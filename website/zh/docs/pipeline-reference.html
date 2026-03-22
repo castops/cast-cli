@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>流水线参考 — CAST</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../../zh/">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../../zh/#how-it-works">工作原理</a>
+        <a href="../../zh/#templates">模板</a>
+        <a href="getting-started.html">文档</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">更新日志</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="../../docs/pipeline-reference.html">EN</a>
+          <a href="./pipeline-reference.html" class="active">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-label">文档</div>
+      <a href="getting-started.html">快速入门</a>
+      <div class="sidebar-label">参考</div>
+      <a href="cli-reference.html">CLI 参考</a>
+      <a href="pipeline-reference.html" class="active">流水线参考</a>
+      <a href="policy-reference.html">策略参考</a>
+      <div class="sidebar-label">指南</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html">安全看板</a>
+      <a href="plugin-guide.html">插件指南</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../../zh/">CAST</a>
+        <span class="sep">/</span>
+        <span>文档</span>
+        <span class="sep">/</span>
+        <span>流水线参考</span>
+      </div>
+
+      <h1>流水线参考</h1>
+      <p>本文档提供 CAST DevSecOps 流水线的完整技术参考。</p>
+
+      <h2>目录</h2>
+      <ul>
+        <li><a href="#overview">概述</a></li>
+        <li><a href="#job-reference">作业参考</a>
+          <ul>
+            <li><a href="#1-secrets-detection">1. 密钥检测</a></li>
+            <li><a href="#2-sast">2. SAST</a></li>
+            <li><a href="#3-sca">3. SCA</a></li>
+            <li><a href="#4-container-security">4. 容器安全</a></li>
+            <li><a href="#5-code-quality">5. 代码质量</a></li>
+            <li><a href="#6-security-gate">6. 安全门禁</a></li>
+          </ul>
+        </li>
+        <li><a href="#permissions">权限</a></li>
+        <li><a href="#trigger-configuration">触发配置</a></li>
+        <li><a href="#customization-guide">自定义指南</a></li>
+        <li><a href="#troubleshooting">故障排查</a></li>
+      </ul>
+
+      <hr>
+
+      <h2 id="overview">概述</h2>
+      <p>CAST DevSecOps 流水线是一个 GitHub Actions 工作流，在每次推送和向主分支发起 Pull Request 时运行六个作业。</p>
+      <pre><code>Trigger: push / pull_request / workflow_dispatch
+│
+├── Job 1: secrets        (Gitleaks)       ─┐
+├── Job 2: sast           (Semgrep)         │ Run in parallel
+├── Job 3: sca            (pip-audit)       │
+├── Job 4: container      (Trivy)          ─┘
+├── Job 5: quality        (Ruff)
+│
+└── Job 6: gate           (Security Gate)  ← waits for 1, 2, 3, 5</code></pre>
+
+      <hr>
+
+      <h2 id="job-reference">作业参考</h2>
+
+      <h3 id="1-secrets-detection">1. 密钥检测</h3>
+      <p><strong>作业 ID：</strong><code>secrets</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code><br>
+      <strong>工具：</strong><a href="https://github.com/gitleaks/gitleaks">Gitleaks v2</a></p>
+
+      <h4>功能说明</h4>
+      <p>扫描仓库的<strong>完整 Git 历史</strong>，检测硬编码的密钥、API 密钥、令牌、密码及其他凭证。Gitleaks 使用一套全面的正则表达式模式，能检测超过 150 种类型的密钥。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">secrets:
+  name: Secrets Detection
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # Full history — critical for catching old commits
+    - name: Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}</code></pre>
+
+      <h4>关键配置项</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>配置项</th>
+            <th>值</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>fetch-depth: 0</code></td>
+            <td>完整历史</td>
+            <td>Gitleaks 扫描所有提交，而非仅扫描最新提交</td>
+          </tr>
+          <tr>
+            <td><code>GITHUB_TOKEN</code></td>
+            <td>自动提供</td>
+            <td>用于公开仓库的请求频率限制规避</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>失败行为</h4>
+      <ul>
+        <li>若任何提交中检测到密钥则失败</li>
+        <li>通过安全门禁<strong>阻止合并</strong></li>
+      </ul>
+
+      <h4>抑制误报</h4>
+      <p>在仓库根目录添加 <code>.gitleaks.toml</code>：</p>
+      <pre><code class="lang-toml">[allowlist]
+  description = "Allowlist"
+  regexes = [
+    '''false-positive-pattern''',
+  ]
+  paths = [
+    '''path/to/test/fixtures''',
+  ]</code></pre>
+
+      <hr>
+
+      <h3 id="2-sast">2. SAST</h3>
+      <p><strong>作业 ID：</strong><code>sast</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code>（容器化）<br>
+      <strong>工具：</strong><a href="https://semgrep.dev">Semgrep</a></p>
+
+      <h4>功能说明</h4>
+      <p>执行静态应用程序安全测试（SAST）——在不执行代码的情况下，分析源代码中的安全漏洞、不安全模式和常见编码错误。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">sast:
+  name: SAST
+  runs-on: ubuntu-latest
+  container:
+    image: semgrep/semgrep
+  steps:
+    - uses: actions/checkout@v4
+    - name: Semgrep scan
+      run: semgrep ci --sarif --output=semgrep.sarif || true
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    - name: Upload to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: semgrep.sarif</code></pre>
+
+      <h4>关键配置项</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>配置项</th>
+            <th>值</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>semgrep/semgrep</code> 容器</td>
+            <td>官方镜像</td>
+            <td>确保使用正确的 Semgrep 版本</td>
+          </tr>
+          <tr>
+            <td><code>|| true</code></td>
+            <td>始终退出码为 0</td>
+            <td>发现结果通过 SARIF 上报，而非退出码</td>
+          </tr>
+          <tr>
+            <td><code>SEMGREP_APP_TOKEN</code></td>
+            <td>可选密钥</td>
+            <td>启用云端规则；未配置则回退到开源规则</td>
+          </tr>
+          <tr>
+            <td>上传步骤的 <code>if: always()</code></td>
+            <td>始终上传</td>
+            <td>即使扫描有发现，也确保 SARIF 被上传</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>SARIF 集成</h4>
+      <p>发现结果上传至 GitHub Security 标签页后，将以以下形式呈现：</p>
+      <ul>
+        <li>仓库的代码扫描告警</li>
+        <li>Pull Request 差异视图上的内联标注</li>
+      </ul>
+
+      <h4>可选：Semgrep Cloud</h4>
+      <p>将 <code>SEMGREP_APP_TOKEN</code> 配置为 GitHub Actions 密钥以启用：</p>
+      <ul>
+        <li>额外的专有规则集</li>
+        <li>在 Semgrep 看板中进行历史追踪</li>
+        <li>团队级别的发现管理</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="3-sca">3. SCA</h3>
+      <p><strong>作业 ID：</strong><code>sca</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code><br>
+      <strong>工具：</strong><a href="https://pypi.org/project/pip-audit/">pip-audit</a></p>
+
+      <h4>功能说明</h4>
+      <p>执行软件成分分析（SCA）——对照已知漏洞数据库（PyPI Advisory Database、OSV）检查您的 Python 依赖项。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">sca:
+  name: SCA
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+        cache: pip
+    - name: pip-audit
+      uses: pypa/gh-action-pip-audit@v1
+      with:
+        inputs: requirements*.txt</code></pre>
+
+      <h4>关键配置项</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>配置项</th>
+            <th>值</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>cache: pip</code></td>
+            <td>已启用</td>
+            <td>加速后续运行</td>
+          </tr>
+          <tr>
+            <td><code>inputs: requirements*.txt</code></td>
+            <td>通配符模式</td>
+            <td>扫描所有 requirements 文件</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>失败行为</h4>
+      <ul>
+        <li>若任何依赖项存在已知 CVE 则失败</li>
+        <li>通过安全门禁<strong>阻止合并</strong></li>
+      </ul>
+
+      <h4>自定义</h4>
+      <p>若要扫描 <code>pyproject.toml</code> 中的依赖项而非 requirements 文件：</p>
+      <pre><code class="lang-yaml">- uses: pypa/gh-action-pip-audit@v1
+  with:
+    inputs: pyproject.toml</code></pre>
+
+      <hr>
+
+      <h3 id="4-container-security">4. 容器安全</h3>
+      <p><strong>作业 ID：</strong><code>container</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code><br>
+      <strong>工具：</strong><a href="https://trivy.dev">Trivy</a></p>
+
+      <h4>功能说明</h4>
+      <p>扫描 Docker 镜像中操作系统软件包和应用程序依赖项的已知 CVE。若仓库中不存在 <code>Dockerfile</code>，该作业将<strong>自动跳过</strong>。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">container:
+  name: Container Security
+  runs-on: ubuntu-latest
+  if: hashFiles('Dockerfile') != ''
+  steps:
+    - uses: actions/checkout@v4
+    - name: Build image
+      run: docker build -t cast-scan:${{ github.sha }} .
+    - name: Trivy scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: cast-scan:${{ github.sha }}
+        format: sarif
+        output: trivy.sarif
+        severity: CRITICAL,HIGH
+        exit-code: "0"
+    - name: Upload to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy.sarif</code></pre>
+
+      <h4>关键配置项</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>配置项</th>
+            <th>值</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>hashFiles('Dockerfile') != ''</code></td>
+            <td>条件判断</td>
+            <td>若无 Dockerfile 则优雅跳过</td>
+          </tr>
+          <tr>
+            <td><code>severity: CRITICAL,HIGH</code></td>
+            <td>过滤器</td>
+            <td>聚焦于可操作的发现</td>
+          </tr>
+          <tr>
+            <td><code>exit-code: "0"</code></td>
+            <td>不退出</td>
+            <td>由门禁作业处理阻断逻辑</td>
+          </tr>
+          <tr>
+            <td><code>github.sha</code> 标签</td>
+            <td>唯一标签</td>
+            <td>防止并发运行时发生冲突</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>失败行为</h4>
+      <ul>
+        <li><strong>不会</strong>直接阻止合并——发现结果通过 SARIF 上报</li>
+        <li>若要添加阻断行为，请将 <code>container</code> 加入门禁作业的 <code>needs</code> 数组</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="5-code-quality">5. 代码质量</h3>
+      <p><strong>作业 ID：</strong><code>quality</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code><br>
+      <strong>工具：</strong><a href="https://docs.astral.sh/ruff/">Ruff</a></p>
+
+      <h4>功能说明</h4>
+      <p>运行 Ruff——一款极速 Python 代码检查器和格式化工具——以强制执行代码风格规范并捕获常见错误。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">quality:
+  name: Code Quality
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/ruff-action@v1</code></pre>
+
+      <h4>自定义</h4>
+      <p>Ruff 从 <code>pyproject.toml</code> 或 <code>ruff.toml</code> 读取配置：</p>
+      <pre><code class="lang-toml"># pyproject.toml
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]</code></pre>
+
+      <h4>失败行为</h4>
+      <ul>
+        <li>若发现任何代码检查错误则失败</li>
+        <li>默认情况下<strong>不阻止合并</strong>（未包含在门禁的 <code>needs</code> 数组中）</li>
+        <li>若要在质量检查失败时阻止合并，请将 <code>quality</code> 添加到门禁的阻断条件中</li>
+      </ul>
+
+      <hr>
+
+      <h3 id="6-security-gate">6. 安全门禁</h3>
+      <p><strong>作业 ID：</strong><code>gate</code><br>
+      <strong>运行器：</strong><code>ubuntu-latest</code><br>
+      <strong>依赖：</strong><code>secrets</code>、<code>sast</code>、<code>sca</code>、<code>quality</code></p>
+
+      <h4>功能说明</h4>
+      <p>汇总所有安全作业的结果，并做出单一的通过/失败决策。GitHub 分支保护规则应以此作业为目标。</p>
+
+      <h4>配置</h4>
+      <pre><code class="lang-yaml">gate:
+  name: Security Gate
+  runs-on: ubuntu-latest
+  needs: [secrets, sast, sca, quality]
+  if: always()
+  steps:
+    - name: Evaluate results
+      run: |
+        echo "secrets : ${{ needs.secrets.result }}"
+        echo "sast    : ${{ needs.sast.result }}"
+        echo "sca     : ${{ needs.sca.result }}"
+        echo "quality : ${{ needs.quality.result }}"
+
+        if [[ "${{ needs.secrets.result }}" == "failure" ||
+              "${{ needs.sast.result }}"    == "failure" ||
+              "${{ needs.sca.result }}"     == "failure" ]]; then
+          echo "❌ Security gate failed — merge blocked"
+          exit 1
+        fi
+
+        echo "✅ All checks passed — safe to merge"</code></pre>
+
+      <h4>门禁决策矩阵</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>密钥检测</th>
+            <th>SAST</th>
+            <th>SCA</th>
+            <th>门禁结果</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>✅ 通过</td>
+            <td>✅ 通过</td>
+            <td>✅ 通过</td>
+            <td>✅ 允许合并</td>
+          </tr>
+          <tr>
+            <td>❌ 失败</td>
+            <td>✅ 通过</td>
+            <td>✅ 通过</td>
+            <td>❌ 阻止合并</td>
+          </tr>
+          <tr>
+            <td>✅ 通过</td>
+            <td>❌ 失败</td>
+            <td>✅ 通过</td>
+            <td>❌ 阻止合并</td>
+          </tr>
+          <tr>
+            <td>✅ 通过</td>
+            <td>✅ 通过</td>
+            <td>❌ 失败</td>
+            <td>❌ 阻止合并</td>
+          </tr>
+          <tr>
+            <td>任意</td>
+            <td>任意</td>
+            <td>任意</td>
+            <td>❌ 阻止合并（以上任一失败）</td>
+          </tr>
+        </tbody>
+      </table>
+      <blockquote>注意：代码质量（Ruff）失败会被上报，但在默认配置下不会阻止合并。</blockquote>
+
+      <h4>通过分支保护强制执行门禁</h4>
+      <p>若要将安全门禁设为 Pull Request 的强制要求：</p>
+      <ol>
+        <li>进入 <strong>Settings → Branches → Branch protection rules</strong></li>
+        <li>为 <code>main</code>（或 <code>master</code>）添加规则</li>
+        <li>启用 <strong>"Require status checks to pass before merging"</strong></li>
+        <li>搜索并添加 <strong>"Security Gate"</strong></li>
+        <li>可选：启用 <strong>"Require branches to be up to date before merging"</strong></li>
+      </ol>
+
+      <hr>
+
+      <h2 id="permissions">权限</h2>
+      <p>工作流申请最小必要权限：</p>
+      <pre><code class="lang-yaml">permissions:
+  contents: read          # checkout code
+  security-events: write  # upload SARIF to Security tab
+  actions: read           # read workflow status for gate</code></pre>
+      <p>不授予对仓库内容的写入权限。</p>
+
+      <hr>
+
+      <h2 id="trigger-configuration">触发配置</h2>
+      <p>默认触发器覆盖最常见的工作流：</p>
+      <pre><code class="lang-yaml">on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:        # manual trigger from GitHub UI</code></pre>
+
+      <h3>仅在 Pull Request 时运行</h3>
+      <p>为减少 Actions 用时，移除 <code>push</code> 触发器：</p>
+      <pre><code class="lang-yaml">on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:</code></pre>
+
+      <h3>添加定时扫描</h3>
+      <p>每日运行一次完整扫描（例如，用于捕获新披露的 CVE）：</p>
+      <pre><code class="lang-yaml">on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC daily
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]</code></pre>
+
+      <hr>
+
+      <h2 id="customization-guide">自定义指南</h2>
+
+      <h3>修改严重性阈值</h3>
+      <p>在 Trivy 作业中修改 <code>severity</code> 输入：</p>
+      <pre><code class="lang-yaml">severity: CRITICAL,HIGH,MEDIUM   # report medium and above</code></pre>
+
+      <h3>在门禁失败时发送邮件通知</h3>
+      <pre><code class="lang-yaml">gate:
+  # ... existing config ...
+  steps:
+    - name: Evaluate results
+      # ... existing step ...
+    - name: Notify on failure
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.example.com
+        to: security-team@example.com
+        subject: "CAST Security Gate Failed — ${{ github.repository }}"
+        body: "Security gate failed on ${{ github.ref }}"</code></pre>
+
+      <h3>跳过特定路径的检查</h3>
+      <pre><code class="lang-yaml">on:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"</code></pre>
+
+      <hr>
+
+      <h2 id="troubleshooting">故障排查</h2>
+
+      <h3>Gitleaks 对合法测试固件报错</h3>
+      <p>添加 <code>.gitleaks.toml</code> 允许列表（参见 <a href="#1-secrets-detection">密钥检测</a> 章节）。</p>
+
+      <h3>Semgrep SARIF 上传失败</h3>
+      <p>确保 <code>permissions</code> 中已设置 <code>security-events: write</code>。<code>github/codeql-action/upload-sarif</code> 操作需要此权限。</p>
+
+      <h3>pip-audit 找不到 requirements 文件</h3>
+      <p>若您仅使用 <code>pyproject.toml</code>，请修改 <code>inputs</code> 参数：</p>
+      <pre><code class="lang-yaml">with:
+  inputs: pyproject.toml</code></pre>
+      <p>或安装您的包并审计环境：</p>
+      <pre><code class="lang-yaml">- run: pip install -e .
+- uses: pypa/gh-action-pip-audit@v1</code></pre>
+
+      <h3>容器作业意外被跳过</h3>
+      <p>若 Dockerfile 位于子目录中，<code>hashFiles('Dockerfile')</code> 条件将返回空字符串。请修改条件以匹配您的路径：</p>
+      <pre><code class="lang-yaml">if: hashFiles('**/Dockerfile') != ''</code></pre>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
+</body>
+</html>
