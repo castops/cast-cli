@@ -317,6 +317,7 @@ See [docs/dashboard-guide.md](docs/dashboard-guide.md) for setup instructions.
 | [Pipeline Reference](docs/pipeline-reference.md) | How each pipeline job works |
 | [GitLab Guide](docs/gitlab-guide.md) | GitLab CI setup and configuration |
 | [Policy Reference](docs/policy-reference.md) | Writing custom OPA/conftest policies |
+| [Plugin Guide](docs/plugin-guide.md) | Extending CAST with custom security tools |
 | [Dashboard Guide](docs/dashboard-guide.md) | Security dashboard setup and GitHub Pages deployment |
 
 Chinese documentation: [docs/zh/](docs/zh/)

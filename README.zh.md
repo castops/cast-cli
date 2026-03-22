@@ -290,6 +290,7 @@ templates/github/publish-dashboard.yml → .github/workflows/publish-dashboard.y
 | [流水线参考](docs/zh/pipeline-reference.md) | 各 Job 技术细节与自定义 |
 | [GitLab 集成指南](docs/zh/gitlab-guide.md) | GitLab CI 专项说明 |
 | [策略参考](docs/zh/policy-reference.md) | 自定义安全门禁策略 |
+| [插件指南](docs/plugin-guide.md) | 接入自定义安全工具（英文） |
 | [看板指南](docs/zh/dashboard-guide.md) | 静态 HTML 合规看板 |
 
 ---
