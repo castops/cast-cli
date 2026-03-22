@@ -83,3 +83,34 @@
 **Context:** 最简方案：`CAST_REQUIRED_ARTIFACTS` 环境变量，空格分隔。留待 Phase 2 配合 cast.yml 一起设计。
 **Priority:** P3
 **Depends on:** cast.yml 配置文件方案（Phase 3）。
+
+## Phase 0 — 需求验证（实施门栅）
+
+### Phase 0 用户采访 Go/No-Go 门栅
+**What:** 在开始实施任何 Phase 2 代码之前，采访 2-3 名 DevOps 工程师。Go 标准：≥2 人说出"我现在无法强制执行 pipeline 标准"或等价表述。
+**Why:** 治理层方向来自推断，而非直接用户反馈。Phase 2 是 Governance Suite（cast validate/doctor/score/fix/explain）——投入可观，需要真实需求验证支撑。
+**Pros:** 低成本（1-2 小时）验证高成本（数天实施）投入的方向；若 No-Go 则改变方向，节省大量时间。
+**Cons:** 延迟实施约 1-2 天。
+**Context:** 目标采访对象：DevOps 工程师、技术负责人、小公司 CTO。关键问题："你现在如何保证团队的 CI/CD pipeline 符合你的标准？"接受标准：≥2 人提到无法强制执行、靠 code review 人肉检查、或"AI 随便生成"现象。No-Go 时重新评估方向。见设计文档 `sxp-main-design-20260322-093557.md`。
+**Priority:** P0 — 所有 Phase 2 实施的前提。
+**Depends on:** 无。
+
+## Governance Suite (Phase 2) — 实施后续
+
+### `cast fix` 备份文件加时间戳
+**What:** `WorkflowPatcher` 在 `--apply` 时将备份文件名从 `.workflow.bak` 改为 `.workflow.bak.YYYYMMDDTHHMMSS`。
+**Why:** 当前方案第二次运行 `--apply` 会静默覆盖原始备份，导致用户无法恢复到最初版本。
+**Pros:** 防止数据丢失；实现极简（`datetime.now().strftime('%Y%m%dT%H%M%S')`）。
+**Cons:** 多次运行会积累 bak 文件，需要用户手动清理（可接受）。
+**Context:** 实施 `cast fix` 时直接采用时间戳方案，无需另立 PR。
+**Priority:** P1 — 与 cast fix 同期实施。
+**Depends on:** cast fix (Phase 2) 实施。
+
+### `cast score --compare` 跨运行 delta 比较
+**What:** 实现 `+15 from yesterday` 效果——将上次运行分数持久化到 `.cast-score.json`，下次运行时读取并展示 delta。
+**Why:** CEO plan 明确包含此功能；delta 信息让分数从"快照"变为"趋势"，显著提升激励效果。
+**Pros:** 用户能看到改进进度，增强使用动力；存储格式简单（JSON）。
+**Cons:** 需要设计存储位置（项目根目录 vs `~/.cast/`）和格式；首次运行无 delta 时的 UX 设计。
+**Context:** 存储方案候选：项目根目录 `.cast-score.json`（与项目绑定）vs `~/.cast/{repo-slug}.json`（全局）。需要在 Phase 2 设计时决定，避免后期迁移。
+**Priority:** P2 — Phase 2 后续迭代。
+**Depends on:** cast score (Phase 2) 基础实施完成。
