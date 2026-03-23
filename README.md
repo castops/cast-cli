@@ -1,11 +1,10 @@
-# CAST — CI/CD Automation & Security Toolkit
-
 <div align="center">
+
+# CAST — CI/CD Automation & Security Toolkit
 
 **One engineer's standards. Every team's pipeline.**
 
 [![PyPI version](https://img.shields.io/pypi/v/castops.svg)](https://pypi.org/project/castops/)
-[![Python](https://img.shields.io/pypi/pyversions/castops.svg)](https://pypi.org/project/castops/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/castops/cast/actions)
 
