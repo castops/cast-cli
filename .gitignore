@@ -6,3 +6,5 @@ dist/
 build/
 .eggs/
 .gstack/
+website/docs/
+website/zh/docs/
