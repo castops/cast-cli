@@ -1,0 +1,38 @@
+# CAST — PR Preview Cleanup
+#
+# Removes the pr-{number}/ subdirectory from the gh-pages branch
+# when a pull request is closed (merged or dismissed).
+
+name: PR Preview Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    name: Remove PR preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+
+      - name: Remove preview directory for PR #${{ github.event.number }}
+        env:
+          PR_NUM: ${{ github.event.number }}
+        run: |
+          if [ -d "pr-${PR_NUM}" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git rm -rf "pr-${PR_NUM}"
+            git commit -m "chore: remove preview for PR #${PR_NUM}"
+            git push
+            echo "Removed pr-${PR_NUM}/"
+          else
+            echo "No preview directory found for PR #${PR_NUM} — nothing to clean up."
+          fi

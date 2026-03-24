@@ -1,0 +1,83 @@
+# CAST — PR Preview Deployment
+#
+# Deploys a preview of the website to the gh-pages branch under
+# pr-{number}/ on every push to a pull request.
+# Posts a comment with the preview URL (updates existing comment on re-push).
+# Cleaned up automatically when the PR is closed.
+
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'website/**'
+      - 'docs/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Deploy PR preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Markdown library
+        run: pip install markdown
+
+      - name: Build docs HTML from Markdown
+        run: python scripts/build_docs.py
+
+      - name: Deploy to gh-pages/pr-${{ github.event.number }}/
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: website
+          branch: gh-pages
+          target-folder: pr-${{ github.event.number }}
+          clean: true
+
+      - name: Post preview URL comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const base = `https://${owner}.github.io/${repo}/pr-${pr}`;
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+
+            const body = [
+              `## 🔍 Preview ready`,
+              ``,
+              `| Page | URL |`,
+              `|------|-----|`,
+              `| EN homepage | [${base}/](${base}/) |`,
+              `| ZH homepage | [${base}/zh/](${base}/zh/) |`,
+              `| Docs (EN) | [${base}/docs/getting-started.html](${base}/docs/getting-started.html) |`,
+              `| Docs (ZH) | [${base}/zh/docs/getting-started.html](${base}/zh/docs/getting-started.html) |`,
+              ``,
+              `> Built from \`${sha}\`. Updates on every push. Removed when PR is closed.`,
+            ].join('\n');
+
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number: pr });
+            const existing = comments.data.find(
+              c => c.user.login === 'github-actions[bot]' && c.body.includes('Preview ready')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            }
