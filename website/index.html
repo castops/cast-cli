@@ -3,777 +3,1117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CAST — Production-Grade DevSecOps Pipeline</title>
-  <meta name="description" content="One engineer's standards. Every team's pipeline. CAST enforces your DevSecOps standards across every repository — without reviewing every PR.">
-  <meta property="og:title" content="CAST — DevSecOps Standards at Team Scale">
+  <title>CAST — DevSecOps pipeline governance, one command</title>
+  <meta name="description" content="Open-source DevSecOps pipeline governance. Secrets detection, SAST, SCA, container security, and code quality — enforced with one command.">
+  <meta property="og:title" content="CAST — DevSecOps pipeline governance, one command">
   <meta property="og:description" content="Secrets scanning, SAST, SCA, container security, and policy-as-code gate. GitHub Actions + GitLab CI. One standard. Every team.">
   <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0D0C0B">
+  <link rel="canonical" href="https://castops.github.io/cast/">
+  <link rel="alternate" hreflang="en" href="https://castops.github.io/cast/">
+  <link rel="alternate" hreflang="zh-CN" href="https://castops.github.io/cast/zh/">
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── Design tokens (shared with dashboard) ───────────────────── */
+    /* ── Design Tokens ─────────────────────────────────────────────── */
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --surface2:  #1c2128;
-      --border:    #30363d;
-      --text:      #e6edf3;
-      --muted:     #8b949e;
-      --green:     #3fb950;
-      --red:       #f85149;
-      --yellow:    #d29922;
-      --blue:      #58a6ff;
-      --purple:    #bc8cff;
-      --nav-h:     60px;
-      --max-w:     1100px;
-      --radius:    8px;
+      --bg:        #0D0C0B;
+      --surface:   #171614;
+      --surface2:  #1F1D1B;
+      --border:    #2A2723;
+      --text:      #EDE9E3;
+      --text-2:    #B5AFA8;
+      --muted:     #7A736C;
+      --accent:    #CBFF2E;
+      --accent-2:  #E87C3E;
+      --success:   #7DFA9B;
+      --warning:   #FFBF47;
+      --danger:    #FF6B57;
+      --info:      #63C7FF;
+      --max-w:     1160px;
+      --r-sm:      4px;
+      --r-md:      8px;
+      --r-lg:      12px;
+
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'Instrument Sans', system-ui, sans-serif;
+      --font-ui:      'IBM Plex Sans Condensed', 'Arial Narrow', sans-serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
     }
 
+    /* ── Reset ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      font-size: 15px;
-      line-height: 1.6;
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.65;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    a { color: var(--blue); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a { color: var(--info); text-decoration: none; transition: color 80ms ease-out; }
+    a:hover { color: var(--accent); }
 
-    /* ── Nav ─────────────────────────────────────────────────────── */
-    nav {
+    img, svg { display: block; }
+
+    /* ── Utility ───────────────────────────────────────────────────── */
+    .container {
+      width: 100%;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--text);
+    }
+
+    /* ── Nav ────────────────────────────────────────────────────────── */
+    .nav {
       position: sticky;
       top: 0;
       z-index: 100;
-      height: var(--nav-h);
-      background: rgba(13, 17, 23, 0.85);
-      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
+      background: rgba(13, 12, 11, 0.88);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
     }
     .nav-inner {
-      max-width: var(--max-w);
-      width: 100%;
-      margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 0;
+      height: 56px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 40px;
     }
     .nav-logo {
-      font-weight: 700;
-      font-size: 17px;
-      color: var(--text);
-      letter-spacing: -0.3px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .nav-logo .shield { font-size: 20px; }
-    .nav-links {
-      display: flex;
-      gap: 24px;
-      font-size: 14px;
-    }
-    .nav-links a { color: var(--muted); transition: color 0.15s; }
-    .nav-links a:hover { color: var(--text); text-decoration: none; }
-    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-    .btn-ghost {
-      padding: 6px 14px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--text);
-      background: transparent;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
       display: flex;
       align-items: center;
       gap: 6px;
+      text-decoration: none;
+      margin-right: 40px;
+      flex-shrink: 0;
     }
-    .btn-ghost:hover { border-color: var(--muted); background: var(--surface); text-decoration: none; }
+    .nav-logo-mark {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+    .nav-logo-text {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-2);
+      letter-spacing: 0;
+      transition: color 80ms ease-out;
+    }
+    .nav-links a:hover { color: var(--text); }
 
-    /* ── Hero ────────────────────────────────────────────────────── */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-left: auto;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .lang-btn {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 3px 7px;
+      border-radius: var(--r-sm);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: color 80ms ease-out, background 80ms ease-out;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .lang-btn:hover,
+    .lang-btn.active { color: var(--text); background: var(--surface2); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: var(--r-sm);
+      border: none;
+      cursor: pointer;
+      transition: opacity 120ms ease-out, background 120ms ease-out;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { opacity: 0.88; color: var(--bg); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface); color: var(--text); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-2); }
+
+    /* ── Hero ───────────────────────────────────────────────────────── */
     .hero {
+      padding: 80px 0 72px;
+      overflow: hidden;
+    }
+    .hero-wrapper {
+      position: relative;
+      display: grid;
+      grid-template-columns: 55fr 45fr;
+      gap: 0;
+      align-items: center;
       max-width: var(--max-w);
       margin: 0 auto;
-      padding: 96px 24px 80px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: center;
+      padding: 0 40px;
     }
-    @media (max-width: 760px) {
-      .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 20px 48px; }
+    .hero-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 52%;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent 0%, #2A2723 15%, #2A2723 85%, transparent 100%);
+      transform: rotate(1.5deg);
+      pointer-events: none;
+    }
+
+    .hero-left {
+      padding-right: 56px;
     }
     .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px 4px 6px;
-      border-radius: 20px;
-      border: 1px solid rgba(63, 185, 80, 0.3);
-      background: rgba(63, 185, 80, 0.08);
-      font-size: 12px;
-      color: var(--green);
-      margin-bottom: 20px;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 5px 14px 5px 10px;
+      margin-bottom: 32px;
     }
-    .hero-badge .dot {
-      width: 6px; height: 6px;
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
       border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
+      flex-shrink: 0;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .hero h1 {
-      font-size: clamp(32px, 5vw, 52px);
+    .hero-badge-text {
+      font-family: var(--font-ui);
+      font-size: 11px;
       font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -1px;
-      margin-bottom: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
-    .hero h1 .accent { color: var(--blue); }
+
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(42px, 6.5vw, 82px);
+      letter-spacing: -0.03em;
+      line-height: 1.0;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+    .hero-h1 .accent-word { color: var(--accent); }
+
     .hero-sub {
       font-size: 17px;
-      color: var(--muted);
+      color: var(--text-2);
+      line-height: 1.7;
       max-width: 480px;
-      margin-bottom: 32px;
-      line-height: 1.65;
+      margin-bottom: 36px;
     }
-    .hero-ctas {
+
+    .hero-cta {
       display: flex;
+      align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
-    .btn-primary {
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      background: var(--blue);
-      color: #0d1117;
-      font-weight: 600;
-      font-size: 14px;
-      transition: opacity 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .hero-cta .btn-primary {
+      font-size: 15px;
+      padding: 11px 24px;
     }
-    .btn-primary:hover { opacity: 0.88; text-decoration: none; }
-    .btn-secondary {
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 14px;
-      transition: border-color 0.15s, background 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .hero-cta .btn-ghost {
+      font-size: 15px;
+      padding: 11px 20px;
     }
-    .btn-secondary:hover { border-color: var(--muted); background: var(--surface); text-decoration: none; }
 
-    /* ── Terminal ────────────────────────────────────────────────── */
+    .hero-right {
+      padding-left: 40px;
+    }
+
+    /* ── Terminal ───────────────────────────────────────────────────── */
     .terminal {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r-lg);
       overflow: hidden;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-family: var(--font-mono);
       font-size: 13px;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      line-height: 1.6;
     }
-    .terminal-bar {
+    .terminal-topbar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      padding: 10px 16px;
       background: var(--surface2);
+      border-bottom: 1px solid var(--border);
     }
     .terminal-dot {
-      width: 10px; height: 10px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
-    .terminal-dot.red   { background: #ff5f56; }
-    .terminal-dot.amber { background: #ffbd2e; }
-    .terminal-dot.green { background: #27c93f; }
-    .terminal-bar .title { margin-left: auto; margin-right: auto; color: var(--muted); font-size: 11px; }
-    .terminal-body { padding: 16px; line-height: 1.9; }
-    .t-prompt { color: var(--green); }
-    .t-cmd    { color: var(--text); }
-    .t-out    { color: var(--muted); }
-    .t-ok     { color: var(--green); }
-    .t-warn   { color: var(--yellow); }
-    .t-dim    { color: #484f58; }
-
-    /* ── Section shared ──────────────────────────────────────────── */
-    section { padding: 80px 24px; }
-    .section-inner { max-width: var(--max-w); margin: 0 auto; }
-    .section-label {
-      font-size: 12px;
-      font-weight: 600;
+    .terminal-dot.red    { background: #FF6B57; }
+    .terminal-dot.yellow { background: #FFBF47; }
+    .terminal-dot.green  { background: #7DFA9B; }
+    .terminal-title {
+      margin-left: 6px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 12px;
+      color: var(--muted);
     }
-    .section-title {
-      font-size: clamp(24px, 4vw, 36px);
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 12px;
-    }
-    .section-sub { color: var(--muted); max-width: 560px; font-size: 16px; }
 
-    /* ── Stats bar ───────────────────────────────────────────────── */
+    .terminal-body {
+      padding: 20px 20px 20px;
+    }
+    .t-line {
+      display: block;
+      white-space: pre;
+    }
+    .t-prompt   { color: var(--accent); }
+    .t-cmd      { color: var(--text); }
+    .t-muted    { color: var(--muted); }
+    .t-ok       { color: var(--success); }
+    .t-warn     { color: var(--warning); }
+    .t-label    { color: var(--info); }
+    .t-dim      { color: var(--text-2); }
+    .t-blank    { display: block; height: 10px; }
+
+    /* ── Stats Bar ──────────────────────────────────────────────────── */
     .stats-bar {
-      background: var(--surface);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 28px 0;
     }
     .stats-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 24px;
       display: flex;
-      gap: 48px;
-      justify-content: center;
-      flex-wrap: wrap;
+      align-items: stretch;
     }
-    .stat { text-align: center; }
-    .stat-n {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -1px;
+    .stat-item {
+      flex: 1;
+      padding: 0 32px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:first-child { padding-left: 0; }
+    .stat-item:last-child  { border-right: none; padding-right: 0; }
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+      color: var(--accent);
       line-height: 1;
+      font-variant-numeric: tabular-nums;
       margin-bottom: 4px;
     }
-    .stat-n .unit { font-size: 16px; color: var(--muted); font-weight: 400; }
-    .stat-label { font-size: 12px; color: var(--muted); }
+    .stat-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
 
-    /* ── What you get ────────────────────────────────────────────── */
-    .tools-section { background: var(--surface); border-top: 1px solid var(--border); }
-    .tools-grid {
-      margin-top: 48px;
+    /* ── Features ───────────────────────────────────────────────────── */
+    .features {
+      padding: 88px 0;
+    }
+    .features-header {
+      margin-bottom: 52px;
+    }
+    .features-title {
+      max-width: 600px;
+    }
+
+    .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r-lg);
       overflow: hidden;
     }
-    .tool-card {
+    .feature-card {
       background: var(--surface);
       padding: 28px;
-      transition: background 0.15s;
+      transition: background 120ms ease-out;
     }
-    .tool-card:hover { background: var(--surface2); }
-    .tool-icon { font-size: 22px; margin-bottom: 12px; }
-    .tool-name { font-weight: 600; margin-bottom: 6px; font-size: 15px; }
-    .tool-powered { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
-    .tool-powered a { color: var(--blue); }
-    .tool-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .feature-card:hover { background: var(--surface2); }
 
-    /* ── How it works ────────────────────────────────────────────── */
+    .feature-layer-tag {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 3px 8px;
+      margin-bottom: 14px;
+    }
+    .feature-card:hover .feature-layer-tag {
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+
+    .feature-title {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .feature-tool {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .feature-tool span {
+      color: var(--text-2);
+    }
+
+    /* ── How it Works ───────────────────────────────────────────────── */
+    .how-it-works {
+      padding: 88px 0;
+      border-top: 1px solid var(--border);
+    }
+    .how-header {
+      margin-bottom: 56px;
+    }
+
     .steps {
-      margin-top: 56px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
+      gap: 0;
       position: relative;
     }
-    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
     .steps::before {
       content: '';
       position: absolute;
-      top: 28px;
-      left: calc(16.67% + 16px);
-      right: calc(16.67% + 16px);
+      top: 20px;
+      left: calc(16.67% + 20px);
+      right: calc(16.67% + 20px);
       height: 1px;
-      background: var(--border);
+      background: linear-gradient(to right, var(--accent), var(--accent-2), var(--accent));
+      opacity: 0.4;
+      pointer-events: none;
     }
-    @media (max-width: 700px) { .steps::before { display: none; } }
+
+    .step {
+      padding: 0 32px 0 0;
+    }
+    .step:last-child { padding-right: 0; }
+
     .step-num {
-      width: 40px; height: 40px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: var(--surface);
+      background: var(--surface2);
       border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: var(--font-ui);
+      font-size: 12px;
       font-weight: 700;
-      font-size: 14px;
-      color: var(--blue);
+      color: var(--accent);
       margin-bottom: 20px;
       position: relative;
       z-index: 1;
     }
-    .step-title { font-weight: 600; margin-bottom: 8px; }
-    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .step-title {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
     .step-code {
-      margin-top: 12px;
-      padding: 10px 14px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 12px;
-      color: var(--green);
+      border-radius: var(--r-md);
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .step-code .prompt { color: var(--accent); }
+
+    /* ── Templates ──────────────────────────────────────────────────── */
+    .templates {
+      padding: 88px 0;
+      border-top: 1px solid var(--border);
+    }
+    .templates-header {
+      margin-bottom: 48px;
     }
 
-    /* ── Template matrix ─────────────────────────────────────────── */
-    .matrix-section { background: var(--surface); border-top: 1px solid var(--border); }
-    .matrix { margin-top: 48px; overflow-x: auto; }
-    .matrix table {
+    .compat-table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
+      border-collapse: collapse;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r-lg);
       overflow: hidden;
-      font-size: 13px;
     }
-    .matrix th {
-      background: var(--surface2);
-      padding: 12px 20px;
+    .compat-table th {
       text-align: left;
-      font-weight: 600;
-      font-size: 12px;
+      padding: 14px 24px;
+      background: var(--surface2);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
-    .matrix td {
-      padding: 14px 20px;
+    .compat-table td {
+      padding: 16px 24px;
       border-bottom: 1px solid var(--border);
+      color: var(--text-2);
       vertical-align: middle;
     }
-    .matrix tr:last-child td { border-bottom: none; }
-    .matrix tr:hover td { background: rgba(255,255,255,0.02); }
-    .check { color: var(--green); font-size: 15px; }
-    .stack-name { font-weight: 600; }
-    .stack-tools { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .platform-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--muted);
+    .compat-table tr:last-child td { border-bottom: none; }
+    .compat-table tr:hover td { background: var(--surface); }
+
+    .compat-table td:first-child {
+      font-weight: 600;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .compat-table td.check {
+      color: var(--success);
+      font-size: 16px;
+    }
+    .compat-table td.partial {
+      color: var(--warning);
+      font-size: 13px;
     }
 
-    /* ── Plugin teaser ───────────────────────────────────────────── */
-    .plugin-section { border-top: 1px solid var(--border); }
-    .plugin-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 80px 24px;
+    /* ── Extend ─────────────────────────────────────────────────────── */
+    .extend {
+      padding: 88px 0;
+      border-top: 1px solid var(--border);
+    }
+    .extend-inner {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 64px;
       align-items: start;
     }
-    @media (max-width: 700px) { .plugin-inner { grid-template-columns: 1fr; gap: 40px; } }
-    .plugin-code {
+    .extend-left {}
+    .extend-right {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r-lg);
       overflow: hidden;
-      font-family: monospace;
-      font-size: 12px;
     }
-    .plugin-code-header {
-      padding: 8px 14px;
+    .code-topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
       background: var(--surface2);
       border-bottom: 1px solid var(--border);
+    }
+    .code-topbar-title {
+      font-family: var(--font-ui);
       font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--muted);
     }
-    .plugin-code pre {
-      padding: 16px;
-      line-height: 1.8;
+    .code-body {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.7;
       overflow-x: auto;
     }
-    .kw  { color: var(--purple); }
-    .str { color: var(--green); }
-    .cm  { color: var(--muted); }
-    .key { color: var(--blue); }
-    .val { color: var(--yellow); }
+    .code-body .ck  { color: var(--info); }
+    .code-body .cv  { color: var(--accent-2); }
+    .code-body .cs  { color: var(--success); }
+    .code-body .cc  { color: var(--muted); font-style: italic; }
+    .code-body .ct  { color: var(--text-2); }
 
-    /* ── CTA strip ───────────────────────────────────────────────── */
-    .cta-strip {
-      background: linear-gradient(135deg, rgba(88,166,255,0.06) 0%, rgba(188,140,255,0.06) 100%);
-      border-top: 1px solid var(--border);
-      text-align: center;
-      padding: 80px 24px;
+    .extend-desc {
+      font-size: 15px;
+      color: var(--text-2);
+      line-height: 1.7;
+      margin-top: 16px;
+      margin-bottom: 28px;
     }
-    .cta-strip h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; margin-bottom: 16px; letter-spacing: -0.5px; }
-    .cta-strip p { color: var(--muted); max-width: 480px; margin: 0 auto 32px; font-size: 16px; }
-    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .extend-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .extend-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+    .extend-list li::before {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: var(--accent);
+      margin-top: 11px;
+      flex-shrink: 0;
+    }
 
-    /* ── Footer ──────────────────────────────────────────────────── */
-    footer {
+    /* ── CTA Strip ──────────────────────────────────────────────────── */
+    .cta-section {
+      padding: 88px 0;
       border-top: 1px solid var(--border);
-      padding: 40px 24px;
+      background: var(--surface);
     }
-    .footer-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
+    .cta-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      gap: 48px;
     }
-    .footer-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; }
-    .footer-links { display: flex; gap: 20px; font-size: 13px; color: var(--muted); }
-    .footer-links a { color: var(--muted); }
-    .footer-links a:hover { color: var(--text); text-decoration: none; }
-    .footer-right { font-size: 12px; color: var(--muted); }
-
-    /* ── Language switcher ───────────────────────────────────────── */
-    .lang-switch {
+    .cta-left {}
+    .cta-headline {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--text);
+      max-width: 540px;
+    }
+    .cta-sub {
+      font-size: 16px;
+      color: var(--text-2);
+      margin-top: 14px;
+    }
+    .cta-right {
       display: flex;
       align-items: center;
-      gap: 2px;
-      font-size: 13px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
+      gap: 12px;
+      flex-shrink: 0;
     }
-    .lang-switch a {
-      padding: 4px 10px;
-      color: var(--muted);
-      background: transparent;
-      transition: color 0.15s, background 0.15s;
+    .cta-right .btn-primary {
+      font-size: 15px;
+      padding: 12px 28px;
+    }
+    .cta-right .btn-ghost {
+      font-size: 15px;
+      padding: 12px 22px;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    .footer {
+      padding: 36px 0;
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       text-decoration: none;
     }
-    .lang-switch a:hover { color: var(--text); background: var(--surface); }
-    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .footer-logo-mark {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+    .footer-logo-text {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      color: var(--text-2);
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--muted);
+      transition: color 80ms ease-out;
+    }
+    .footer-links a:hover { color: var(--text-2); }
+    .footer-copy {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .container { padding: 0 20px; }
+      .hero-wrapper { grid-template-columns: 1fr; padding: 0 20px; }
+      .hero-wrapper::before { display: none; }
+      .hero-left { padding-right: 0; margin-bottom: 40px; }
+      .hero-right { padding-left: 0; }
+      .stats-inner { flex-wrap: wrap; gap: 16px 0; }
+      .stat-item { flex: 0 0 50%; border-right: none; padding: 0 0 0 0; }
+      .stat-item:nth-child(odd) { padding-right: 24px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .step { padding: 0 0 32px 0; }
+      .extend-inner { grid-template-columns: 1fr; gap: 32px; }
+      .cta-inner { flex-direction: column; gap: 28px; align-items: flex-start; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-cta { flex-direction: column; align-items: flex-start; }
+      .nav-inner { padding: 0 20px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ── Nav ──────────────────────────────────────────────────────── -->
-  <nav>
-    <div class="nav-inner">
-      <a class="nav-logo" href="./">
-        <span class="shield">🛡️</span>
-        CAST
+<!-- ── Nav ─────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="./" class="nav-logo" aria-label="CAST home">
+      <span class="nav-logo-mark" aria-hidden="true"></span>
+      <span class="nav-logo-text">CAST</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#templates">Templates</a></li>
+      <li><a href="docs/getting-started.html">Docs</a></li>
+      <li><a href="https://github.com/castops/cast-cli/blob/main/CHANGELOG.md">Changelog</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="lang-switch">
+        <a href="./" class="lang-btn active">EN</a>
+        <a href="zh/" class="lang-btn">中文</a>
+      </div>
+      <a href="https://github.com/castops/cast-cli" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
       </a>
-      <div class="nav-links">
-        <a href="#how-it-works">How it works</a>
-        <a href="#templates">Templates</a>
-        <a href="docs/getting-started.html">Docs</a>
-        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
-      </div>
-      <div class="nav-right">
-        <div class="lang-switch">
-          <a href="./" class="active">EN</a>
-          <a href="zh/">中文</a>
-        </div>
-        <a class="btn-ghost" href="https://github.com/castops/cast">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          GitHub
-        </a>
-      </div>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- ── Hero ─────────────────────────────────────────────────────── -->
-  <div class="hero">
-    <div class="hero-text">
+<!-- ── Hero ─────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-wrapper">
+    <div class="hero-left">
       <div class="hero-badge">
-        <span class="dot"></span>
-        Open source · Apache 2.0
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        <span class="hero-badge-text">Open source · Apache 2.0</span>
       </div>
-      <h1>
+      <h1 class="hero-h1">
         One engineer's standards.<br>
-        Every team's <span class="accent">pipeline</span>.
+        Every team's <span class="accent-word">pipeline.</span>
       </h1>
       <p class="hero-sub">
-        Enforce your DevSecOps standards across every repository — secrets scanning,
-        SAST, SCA, container security, and a policy-as-code gate. GitHub Actions and
-        GitLab CI. One command to start.
+        DevSecOps governance that enforces secrets detection, SAST, SCA, container security, and code quality — in every CI run, without hunting for yet another tool.
       </p>
-      <div class="hero-ctas">
-        <a class="btn-primary" href="docs/getting-started.html">
+      <div class="hero-cta">
+        <a href="docs/getting-started.html" class="btn btn-primary">
           Get started →
         </a>
-        <a class="btn-secondary" href="https://github.com/castops/cast">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <a href="https://github.com/castops/cast-cli" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           View on GitHub
         </a>
       </div>
     </div>
 
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot red"></span>
-        <span class="terminal-dot amber"></span>
-        <span class="terminal-dot green"></span>
-        <span class="title">bash</span>
-      </div>
-      <div class="terminal-body">
-        <div><span class="t-prompt">$</span> <span class="t-cmd">pip install castops</span></div>
-        <div class="t-dim">Collecting castops…  ✓</div>
-        <div>&nbsp;</div>
-        <div><span class="t-prompt">$</span> <span class="t-cmd">cast init</span></div>
-        <div class="t-out">🔍 Detected: Python · GitHub Actions</div>
-        <div>&nbsp;</div>
-        <div class="t-out">Writing <span style="color:var(--blue)">.github/workflows/devsecops.yml</span></div>
-        <div>&nbsp;</div>
-        <div class="t-ok">✓ Secrets Detection   Gitleaks</div>
-        <div class="t-ok">✓ SAST                Semgrep</div>
-        <div class="t-ok">✓ SCA                 pip-audit</div>
-        <div class="t-ok">✓ Container Security  Trivy</div>
-        <div class="t-ok">✓ Code Quality        Ruff</div>
-        <div class="t-ok">✓ Security Gate       conftest + OPA</div>
-        <div>&nbsp;</div>
-        <div class="t-ok">🛡️  Pipeline installed. Push to activate.</div>
+    <div class="hero-right">
+      <div class="terminal" role="img" aria-label="Terminal showing cast init command output">
+        <div class="terminal-topbar">
+          <span class="terminal-dot red"   aria-hidden="true"></span>
+          <span class="terminal-dot yellow" aria-hidden="true"></span>
+          <span class="terminal-dot green"  aria-hidden="true"></span>
+          <span class="terminal-title">shell — cast init</span>
+        </div>
+        <div class="terminal-body">
+          <span class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">pip install castops</span></span>
+          <span class="t-line t-dim">Successfully installed castops-1.4.2</span>
+          <span class="t-blank"></span>
+          <span class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">cast init</span></span>
+          <span class="t-line t-dim">Detecting project stack...</span>
+          <span class="t-line t-ok">  ✓ Python 3.12 detected</span>
+          <span class="t-line t-ok">  ✓ GitHub Actions detected</span>
+          <span class="t-line t-ok">  ✓ Docker layer found</span>
+          <span class="t-blank"></span>
+          <span class="t-line t-dim">Enabling security layers:</span>
+          <span class="t-line t-ok">  [1/6] Secrets detection  <span class="t-muted">gitleaks</span></span>
+          <span class="t-line t-ok">  [2/6] SAST               <span class="t-muted">semgrep</span></span>
+          <span class="t-line t-ok">  [3/6] SCA                <span class="t-muted">pip-audit</span></span>
+          <span class="t-line t-ok">  [4/6] Container          <span class="t-muted">trivy</span></span>
+          <span class="t-line t-ok">  [5/6] Code quality       <span class="t-muted">ruff</span></span>
+          <span class="t-line t-ok">  [6/6] Security gate      <span class="t-muted">conftest</span></span>
+          <span class="t-blank"></span>
+          <span class="t-line"><span class="t-ok">✓</span> <span class="t-cmd">.github/workflows/cast.yml created</span></span>
+          <span class="t-line t-dim">Push to enable pipeline governance.</span>
+        </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- ── Stats bar ─────────────────────────────────────────────────── -->
-  <div class="stats-bar">
+<!-- ── Stats Bar ─────────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="container">
     <div class="stats-inner">
-      <div class="stat">
-        <div class="stat-n">6</div>
+      <div class="stat-item">
+        <div class="stat-number">6</div>
         <div class="stat-label">Security layers</div>
       </div>
-      <div class="stat">
-        <div class="stat-n">3</div>
+      <div class="stat-item">
+        <div class="stat-number">3</div>
         <div class="stat-label">Languages</div>
       </div>
-      <div class="stat">
-        <div class="stat-n">2</div>
+      <div class="stat-item">
+        <div class="stat-number">2</div>
         <div class="stat-label">CI platforms</div>
       </div>
-      <div class="stat">
-        <div class="stat-n">1<span class="unit"> command</span></div>
-        <div class="stat-label">to install</div>
+      <div class="stat-item">
+        <div class="stat-number">1</div>
+        <div class="stat-label">Command</div>
       </div>
-      <div class="stat">
-        <div class="stat-n">0</div>
+      <div class="stat-item">
+        <div class="stat-number">0</div>
         <div class="stat-label">External accounts</div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ── What you get ─────────────────────────────────────────────── -->
-  <section class="tools-section" id="features">
-    <div class="section-inner">
-      <div class="section-label">What you get</div>
-      <h2 class="section-title">Every layer of the security stack.<br>Out of the box.</h2>
-      <p class="section-sub">Each CAST pipeline runs 5 parallel jobs, followed by a policy-as-code gate that controls whether a pull request can merge.</p>
-
-      <div class="tools-grid">
-        <div class="tool-card">
-          <div class="tool-icon">🔑</div>
-          <div class="tool-name">Secrets Detection</div>
-          <div class="tool-powered">Powered by <a href="https://github.com/gitleaks/gitleaks">Gitleaks</a></div>
-          <div class="tool-desc">Scans your entire git history for leaked credentials, API keys, and tokens — not just the latest commit.</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-icon">🔍</div>
-          <div class="tool-name">SAST</div>
-          <div class="tool-powered">Powered by <a href="https://semgrep.dev">Semgrep</a></div>
-          <div class="tool-desc">Finds security bugs and anti-patterns in your source code using 1,000+ open-source rules, with SARIF upload to GitHub Security.</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-icon">📦</div>
-          <div class="tool-name">SCA</div>
-          <div class="tool-powered">pip-audit · npm audit · govulncheck</div>
-          <div class="tool-desc">Detects known CVEs in your dependencies. Stack-appropriate tool is selected automatically.</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-icon">🐳</div>
-          <div class="tool-name">Container Security</div>
-          <div class="tool-powered">Powered by <a href="https://trivy.dev">Trivy</a></div>
-          <div class="tool-desc">Scans your Docker image for OS and library CVEs. Skipped automatically if no Dockerfile is present.</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-icon">✏️</div>
-          <div class="tool-name">Code Quality</div>
-          <div class="tool-powered">Ruff · ESLint · staticcheck</div>
-          <div class="tool-desc">Enforces code style and quality standards. Informational — does not block merges by default.</div>
-        </div>
-        <div class="tool-card">
-          <div class="tool-icon">🚦</div>
-          <div class="tool-name">Security Gate</div>
-          <div class="tool-powered">Powered by <a href="https://conftest.dev">conftest</a> + OPA Rego</div>
-          <div class="tool-desc">Evaluates all SARIF findings against versioned policies. Blocks merges on critical findings. Policies live in your repo.</div>
-        </div>
-      </div>
+<!-- ── Features ──────────────────────────────────────────────────────── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header">
+      <p class="section-label">What you get</p>
+      <h2 class="section-title features-title">
+        Every layer of the security stack.<br>Out of the box.
+      </h2>
     </div>
-  </section>
+    <div class="features-grid">
 
-  <!-- ── How it works ─────────────────────────────────────────────── -->
-  <section id="how-it-works">
-    <div class="section-inner">
-      <div class="section-label">How it works</div>
-      <h2 class="section-title">From zero to production pipeline<br>in under five minutes.</h2>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-title">Install the CLI</div>
-          <div class="step-desc">One pip install. Works with Python 3.9+. No external accounts or API tokens required.</div>
-          <div class="step-code">pip install castops</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-title">Run cast init</div>
-          <div class="step-desc">CAST detects your stack and CI platform, then writes the workflow file to the right place.</div>
-          <div class="step-code">cast init</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-title">Push and ship</div>
-          <div class="step-desc">Every push and pull request now triggers the full security pipeline. Findings block unsafe merges.</div>
-          <div class="step-code">git push</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Template matrix ───────────────────────────────────────────── -->
-  <section class="matrix-section" id="templates">
-    <div class="section-inner">
-      <div class="section-label">Templates</div>
-      <h2 class="section-title">Every stack. Both platforms.</h2>
-      <p class="section-sub">All templates include the full 6-layer security stack and are tested on every CAST release.</p>
-
-      <div class="matrix">
-        <table>
-          <thead>
-            <tr>
-              <th>Stack</th>
-              <th>SCA Tool</th>
-              <th>Quality Tool</th>
-              <th>
-                <span class="platform-badge">GitHub Actions</span>
-              </th>
-              <th>
-                <span class="platform-badge">GitLab CI</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <div class="stack-name">🐍 Python</div>
-                <div class="stack-tools">pyproject.toml · requirements.txt · setup.py</div>
-              </td>
-              <td>pip-audit</td>
-              <td>Ruff</td>
-              <td><span class="check">✓</span></td>
-              <td><span class="check">✓</span></td>
-            </tr>
-            <tr>
-              <td>
-                <div class="stack-name">⬡ Node.js</div>
-                <div class="stack-tools">package.json</div>
-              </td>
-              <td>npm audit</td>
-              <td>ESLint</td>
-              <td><span class="check">✓</span></td>
-              <td><span class="check">✓</span></td>
-            </tr>
-            <tr>
-              <td>
-                <div class="stack-name">🐹 Go</div>
-                <div class="stack-tools">go.mod</div>
-              </td>
-              <td>govulncheck</td>
-              <td>staticcheck</td>
-              <td><span class="check">✓</span></td>
-              <td><span class="check">✓</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Plugin teaser ─────────────────────────────────────────────── -->
-  <section class="plugin-section" id="extend">
-    <div class="plugin-inner">
-      <div>
-        <div class="section-label">Extensible</div>
-        <h2 class="section-title">Bring your own tools.</h2>
-        <p style="color:var(--muted); font-size:16px; margin: 16px 0 24px; line-height:1.65;">
-          CAST's gate speaks SARIF — the universal security findings format.
-          Any tool that outputs SARIF slots into the pipeline automatically.
-          No forks. No rewrites.
-        </p>
-        <p style="color:var(--muted); font-size:14px;">
-          Replace pip-audit with Snyk. Add Bandit alongside Semgrep.
-          Bring your internal compliance scanner. The gate evaluates everything.
-        </p>
-        <div style="margin-top:28px;">
-          <a class="btn-secondary" href="docs/plugin-guide.html">Plugin guide →</a>
-        </div>
+      <div class="feature-card">
+        <span class="feature-layer-tag">Layer 1</span>
+        <div class="feature-title">Secrets Detection</div>
+        <div class="feature-tool">via <span>Gitleaks</span></div>
       </div>
 
-      <div class="plugin-code">
-        <div class="plugin-code-header">custom-snyk.yml — drop alongside CAST workflow</div>
-        <pre><span class="key">jobs</span><span class="t-dim">:</span>
-  <span class="key">snyk</span><span class="t-dim">:</span>
-    <span class="key">runs-on</span><span class="t-dim">:</span> <span class="str">ubuntu-latest</span>
-    <span class="key">steps</span><span class="t-dim">:</span>
-      <span class="t-dim">- uses:</span> <span class="str">actions/checkout@v4</span>
-      <span class="t-dim">-</span> <span class="key">run</span><span class="t-dim">:</span> <span class="str">snyk test --sarif-file-output=snyk.sarif</span>
-        <span class="key">env</span><span class="t-dim">:</span>
-          <span class="key">SNYK_TOKEN</span><span class="t-dim">:</span> <span class="val">${{ secrets.SNYK_TOKEN }}</span>
-      <span class="t-dim">- uses:</span> <span class="str">actions/upload-artifact@v4</span>
-        <span class="key">with</span><span class="t-dim">:</span>
-          <span class="t-dim"># CAST gate picks up any cast-sarif-* artifact</span>
-          <span class="key">name</span><span class="t-dim">:</span> <span class="str">cast-sarif-snyk</span>
-          <span class="key">path</span><span class="t-dim">:</span> <span class="str">snyk.sarif</span></pre>
+      <div class="feature-card">
+        <span class="feature-layer-tag">Layer 2</span>
+        <div class="feature-title">SAST</div>
+        <div class="feature-tool">via <span>Semgrep</span></div>
       </div>
-    </div>
-  </section>
 
-  <!-- ── CTA strip ────────────────────────────────────────────────── -->
-  <div class="cta-strip">
-    <h2>Ship secure code, starting today.</h2>
-    <p>One command. No external accounts. No configuration required.</p>
-    <div class="cta-btns">
-      <a class="btn-primary" href="docs/getting-started.html">Get started →</a>
-      <a class="btn-secondary" href="https://github.com/castops/cast">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        Star on GitHub
-      </a>
+      <div class="feature-card">
+        <span class="feature-layer-tag">Layer 3</span>
+        <div class="feature-title">SCA — Dependency Audit</div>
+        <div class="feature-tool">via <span>pip-audit · npm audit · govulncheck</span></div>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-layer-tag">Layer 4</span>
+        <div class="feature-title">Container Security</div>
+        <div class="feature-tool">via <span>Trivy</span></div>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-layer-tag">Layer 5</span>
+        <div class="feature-title">Code Quality</div>
+        <div class="feature-tool">via <span>Ruff · ESLint · staticcheck</span></div>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-layer-tag">Gate</span>
+        <div class="feature-title">Security Gate</div>
+        <div class="feature-tool">via <span>conftest + OPA Rego</span></div>
+      </div>
+
     </div>
   </div>
+</section>
 
-  <!-- ── Footer ────────────────────────────────────────────────────── -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-logo">
-        <span>🛡️</span> CAST
-      </div>
-      <div class="footer-links">
-        <a href="https://github.com/castops/cast">GitHub</a>
-        <a href="docs/getting-started.html">Docs</a>
-        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
-        <a href="https://github.com/castops/cast/blob/main/SECURITY.md">Security</a>
-        <a href="https://github.com/castops/cast/blob/main/LICENSE">License</a>
-      </div>
-      <div class="footer-right">Apache 2.0 · Built with ❤️ by castops</div>
+<!-- ── How it Works ──────────────────────────────────────────────────── -->
+<section class="how-it-works" id="how-it-works">
+  <div class="container">
+    <div class="how-header">
+      <p class="section-label">How it works</p>
+      <h2 class="section-title">Three commands to governed pipelines.</h2>
     </div>
-  </footer>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Install</div>
+        <div class="step-desc">Add CAST to your environment. No accounts, no SaaS sign-ups, no phone-home telemetry.</div>
+        <div class="step-code"><span class="prompt">$</span> pip install castops</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Init</div>
+        <div class="step-desc">CAST detects your stack and scaffolds a pipeline config tuned to your language and CI platform.</div>
+        <div class="step-code"><span class="prompt">$</span> cast init</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Push</div>
+        <div class="step-desc">All six security layers run on every push. Failing the gate blocks the merge. No configuration drift.</div>
+        <div class="step-code"><span class="prompt">$</span> git push</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Templates ─────────────────────────────────────────────────────── -->
+<section class="templates" id="templates">
+  <div class="container">
+    <div class="templates-header">
+      <p class="section-label">Templates</p>
+      <h2 class="section-title">Works where you already work.</h2>
+    </div>
+    <table class="compat-table">
+      <thead>
+        <tr>
+          <th>Language</th>
+          <th>SCA Tool</th>
+          <th>Quality Tool</th>
+          <th>GitHub Actions</th>
+          <th>GitLab CI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Python</td>
+          <td>pip-audit</td>
+          <td>Ruff</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Node.js</td>
+          <td>npm audit</td>
+          <td>ESLint</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Go</td>
+          <td>govulncheck</td>
+          <td>staticcheck</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Extensible ─────────────────────────────────────────────────────── -->
+<section class="extend" id="extend">
+  <div class="container">
+    <div class="extend-inner">
+      <div class="extend-left">
+        <p class="section-label">Extensible</p>
+        <h2 class="section-title">Your tools. Your rules.</h2>
+        <p class="extend-desc">
+          CAST is a governance layer, not a walled garden. Drop in any tool you already trust — Snyk, Checkov, custom OPA policies — by adding a YAML plugin definition. No patching the core.
+        </p>
+        <ul class="extend-list">
+          <li>Drop-in YAML plugin definitions</li>
+          <li>Any CLI tool becomes a security layer</li>
+          <li>Custom OPA Rego policies for your gate</li>
+          <li>Works alongside existing CI steps</li>
+        </ul>
+      </div>
+      <div class="extend-right">
+        <div class="code-topbar">
+          <span class="terminal-dot yellow" aria-hidden="true"></span>
+          <span class="code-topbar-title">plugins/custom-snyk.yml</span>
+        </div>
+        <pre class="code-body"><span class="cc"># Custom Snyk plugin for CAST</span>
+<span class="ck">name</span><span class="ct">:</span> <span class="cs">custom-snyk</span>
+<span class="ck">layer</span><span class="ct">:</span> <span class="cv">sca</span>
+<span class="ck">enabled</span><span class="ct">:</span> <span class="cs">true</span>
+
+<span class="ck">run</span><span class="ct">:</span>
+  <span class="ck">command</span><span class="ct">:</span> <span class="cs">snyk test --severity-threshold=high</span>
+  <span class="ck">fail_on</span><span class="ct">:</span> <span class="cv">nonzero_exit</span>
+
+<span class="ck">report</span><span class="ct">:</span>
+  <span class="ck">format</span><span class="ct">:</span> <span class="cs">sarif</span>
+  <span class="ck">output</span><span class="ct">:</span> <span class="cs">snyk-results.sarif</span>
+
+<span class="ck">gate</span><span class="ct">:</span>
+  <span class="ck">policy</span><span class="ct">:</span> <span class="cs">policy/snyk.rego</span>
+  <span class="ck">block_merge</span><span class="ct">:</span> <span class="cv">true</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="cta-left">
+        <h2 class="cta-headline">Ship secure code,<br>starting today.</h2>
+        <p class="cta-sub">One command. Six layers. Zero excuses.</p>
+      </div>
+      <div class="cta-right">
+        <a href="docs/getting-started.html" class="btn btn-primary">
+          Get started →
+        </a>
+        <a href="https://github.com/castops/cast-cli" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <a href="./" class="footer-logo" aria-label="CAST home">
+        <span class="footer-logo-mark" aria-hidden="true"></span>
+        <span class="footer-logo-text">CAST</span>
+      </a>
+      <ul class="footer-links">
+        <li><a href="https://github.com/castops/cast-cli" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="docs/getting-started.html">Docs</a></li>
+        <li><a href="https://github.com/castops/cast-cli/blob/main/CHANGELOG.md">Changelog</a></li>
+        <li><a href="https://github.com/castops/cast-cli/blob/main/SECURITY.md">Security</a></li>
+        <li><a href="https://github.com/castops/cast-cli/blob/main/LICENSE">License</a></li>
+      </ul>
+      <span class="footer-copy">Apache 2.0 · Built with ❤️ by castops</span>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>
