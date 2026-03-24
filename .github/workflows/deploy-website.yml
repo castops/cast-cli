@@ -1,8 +1,11 @@
 # CAST — Deploy official website to GitHub Pages
 #
 # Triggers on push to main (website/ or docs/ changes).
-# Builds HTML from Markdown sources, then serves website/ at
-# https://castops.github.io/cast/
+# Builds HTML from Markdown sources, then pushes website/ to the
+# gh-pages branch. PR preview subdirectories (pr-*/) are preserved.
+#
+# Pages source must be set to: Deploy from branch → gh-pages → / (root)
+# Repo Settings → Pages → Source → Deploy from a branch
 
 name: Deploy Website
 
@@ -15,21 +18,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: pages-main
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,14 +42,11 @@ jobs:
       - name: Build docs HTML from Markdown
         run: python scripts/build_docs.py
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: website/
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: website
+          branch: gh-pages
+          clean: true
+          clean-exclude: |
+            pr-*
