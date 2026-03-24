@@ -1,0 +1,60 @@
+{
+  "date": "2026-03-22",
+  "window": "7d",
+  "metrics": {
+    "commits": 23,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 17007,
+    "deletions": 504,
+    "net_loc": 16503,
+    "test_loc": 415,
+    "test_ratio": 0.024,
+    "active_days": 3,
+    "sessions": 9,
+    "deep_sessions": 1,
+    "avg_session_minutes": 16,
+    "loc_per_session_hour": 5500,
+    "feat_pct": 0.39,
+    "fix_pct": 0.43,
+    "docs_pct": 0.13,
+    "peak_hour": 20,
+    "ai_assisted_commits": 19
+  },
+  "authors": {
+    "shenxianpeng": {
+      "commits": 23,
+      "insertions": 17007,
+      "deletions": 504,
+      "test_ratio": 0.024,
+      "top_area": "website/"
+    }
+  },
+  "version_range": ["initial", "initial"],
+  "streak_days": 3,
+  "tweetable": "Week of Mar 15: 23 commits, 17k LOC, 3 active days, 9 sessions | Streak: 3d | 83% AI-assisted",
+  "backlog": {
+    "total_open": 9,
+    "p0_p1": 0,
+    "p2": 1,
+    "p3": 1,
+    "completed_this_period": 0,
+    "added_this_period": 2
+  },
+  "test_health": {
+    "total_test_files": 10,
+    "tests_added_this_period": 0,
+    "regression_test_commits": 0,
+    "test_files_changed": 0
+  },
+  "skill_usage": {
+    "office-hours": 6,
+    "plan-eng-review": 3,
+    "plan-ceo-review": 2,
+    "qa": 2,
+    "ship": 1,
+    "document-release": 1,
+    "design-review": 1,
+    "retro": 1
+  }
+}
