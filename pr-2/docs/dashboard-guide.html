@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Dashboard Guide — CAST</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../#how-it-works">How it works</a>
+        <a href="../#templates">Templates</a>
+        <a href="getting-started.html">Docs</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="./" class="active">EN</a>
+          <a href="../zh/">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+  <aside class="sidebar">
+      <div class="sidebar-label">Documentation</div>
+      <a href="getting-started.html">Getting Started</a>
+      <div class="sidebar-label">Reference</div>
+      <a href="cli-reference.html">CLI Reference</a>
+      <a href="pipeline-reference.html">Pipeline Reference</a>
+      <a href="policy-reference.html">Policy Reference</a>
+      <div class="sidebar-label">Guides</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html" class="active">Security Dashboard</a>
+      <a href="plugin-guide.html">Plugin Guide</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../">CAST</a>
+        <span class="sep">/</span>
+        <span>Docs</span>
+        <span class="sep">/</span>
+        <span>Security Dashboard Guide</span>
+      </div>
+
+<h1>Security Dashboard Guide</h1>
+<p>CAST can generate a static HTML compliance dashboard from SARIF scan results
+and publish it to GitHub Pages — no external services, no SaaS accounts.</p>
+<h2>What the Dashboard Shows</h2>
+<p>Each SARIF file becomes one row in the dashboard:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project / Tool</td>
+<td>SARIF filename + tools that produced it</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟢 PASS / 🔴 FAIL / 🟡 WARN</td>
+</tr>
+<tr>
+<td>Critical</td>
+<td>Count of SARIF <code>error</code>-level findings</td>
+</tr>
+<tr>
+<td>High</td>
+<td>Count of SARIF <code>warning</code>-level findings</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Count of SARIF <code>note</code>-level findings</td>
+</tr>
+<tr>
+<td>Details</td>
+<td>Expandable list of individual findings</td>
+</tr>
+</tbody>
+</table>
+<p>The header shows total counts and the commit SHA of the last scanned run.</p>
+<hr />
+<h2>Setup</h2>
+<h3>Step 1 — Enable GitHub Pages</h3>
+<p>In your repository: <strong>Settings → Pages → Source: GitHub Actions</strong></p>
+<h3>Step 2 — Add the publish workflow</h3>
+<pre><code class="language-bash">mkdir -p .github/workflows
+curl -o .github/workflows/publish-dashboard.yml \
+  https://raw.githubusercontent.com/castops/cast/main/templates/github/publish-dashboard.yml
+</code></pre>
+<p>Or copy it from the CAST repo:</p>
+<pre><code>templates/github/publish-dashboard.yml → .github/workflows/publish-dashboard.yml
+</code></pre>
+<h3>Step 3 — Copy the dashboard scripts</h3>
+<pre><code class="language-bash">mkdir -p dashboard
+curl -o dashboard/generate.py \
+  https://raw.githubusercontent.com/castops/cast/main/dashboard/generate.py
+curl -o dashboard/template.html \
+  https://raw.githubusercontent.com/castops/cast/main/dashboard/template.html
+</code></pre>
+<h3>Step 4 — Commit and push</h3>
+<pre><code class="language-bash">git add .github/workflows/publish-dashboard.yml dashboard/
+git commit -m &quot;ci: add CAST security dashboard&quot;
+git push
+</code></pre>
+<p>The dashboard publishes automatically after each CAST DevSecOps pipeline run.</p>
+<hr />
+<h2>How It Works</h2>
+<pre><code>CAST DevSecOps pipeline
+  ├── sast job     → uploads cast-sarif-sast artifact (semgrep.sarif)
+  └── container job → uploads cast-sarif-container artifact (trivy.sarif)
+
+publish-dashboard workflow (triggered on workflow_run: completed)
+  ├── downloads all cast-sarif-* artifacts
+  ├── runs python dashboard/generate.py
+  └── deploys _site/index.html to GitHub Pages
+</code></pre>
+<p>The <code>workflow_run</code> trigger ensures the dashboard only publishes after a
+complete pipeline run, not on every push.</p>
+<hr />
+<h2>Generating the Dashboard Locally</h2>
+<pre><code class="language-bash"># Place your SARIF files in sarif-results/
+mkdir -p sarif-results
+cp path/to/semgrep.sarif sarif-results/
+cp path/to/trivy.sarif sarif-results/
+
+# Generate
+python dashboard/generate.py
+
+# Open
+open dashboard/index.html
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code>python dashboard/generate.py --help
+
+  --sarif-dir DIR    Directory containing .sarif files (default: sarif-results)
+  --output FILE      Output HTML path (default: dashboard/index.html)
+  --commit SHA       Commit SHA to display in header
+</code></pre>
+<hr />
+<h2>Customizing the Dashboard</h2>
+<p>The template lives in <code>dashboard/template.html</code>. It uses plain HTML and
+inline CSS — no build step, no npm, no webpack.</p>
+<p>To customize colors, edit the CSS variables in <code>:root</code>:</p>
+<pre><code class="language-css">:root {
+  --green: #3fb950;   /* PASS badge color */
+  --red: #f85149;     /* FAIL badge color */
+  --yellow: #d29922;  /* WARN badge color */
+}
+</code></pre>
+<p>To add columns (e.g., scanner version), extend <code>generate.py</code> and the
+matching <code>&lt;th&gt;</code>/<code>&lt;td&gt;</code> in the template.</p>
+<hr />
+<h2>Multi-repo Dashboards</h2>
+<p>To aggregate findings from multiple repositories into one dashboard:</p>
+<ol>
+<li>Have each repo upload its SARIF artifacts with a unique prefix:
+   ```yaml</li>
+<li>
+<p>uses: actions/upload-artifact@v4
+     with:
+       name: cast-sarif-myrepo-sast
+       path: semgrep.sarif
+   ```</p>
+</li>
+<li>
+<p>In a central <code>dashboard</code> repository, download artifacts from all repos
+   using <code>gh run download</code> or the GitHub API, then run <code>generate.py</code>.</p>
+</li>
+</ol>
+<p>This approach requires a GitHub token with <code>actions:read</code> access to each repo.</p>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
+</body>
+</html>
