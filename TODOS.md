@@ -2,14 +2,6 @@
 
 ## Design
 
-### Create DESIGN.md
-**What:** Run `/design-consultation` to document the dashboard's design system.
-**Why:** `dashboard/template.html` uses GitHub-dark CSS tokens (`#0d1117`, `#58a6ff`, etc.) but this palette is implicit and undocumented. Without a reference, future contributors may introduce inconsistent colors.
-**Pros:** Prevents design drift; gives future contributors a reference for new UI additions (e.g., multi-repo dashboard, dark/light toggle).
-**Cons:** Minor time investment (~15 min).
-**Context:** Design tokens live in the `:root` block of `dashboard/template.html`. The implicit system already has semantic naming (--critical-bg, --pass-bg, --high-bg) — DESIGN.md would formalize and explain these choices.
-**Depends on:** None.
-
 ## Accessibility
 
 ### Verify color contrast ratios meet WCAG AA
@@ -114,3 +106,13 @@
 **Context:** 存储方案候选：项目根目录 `.cast-score.json`（与项目绑定）vs `~/.cast/{repo-slug}.json`（全局）。需要在 Phase 2 设计时决定，避免后期迁移。
 **Priority:** P2 — Phase 2 后续迭代。
 **Depends on:** cast score (Phase 2) 基础实施完成。
+
+## Completed
+
+### Create DESIGN.md
+**What:** Run `/design-consultation` to document the project's design system (Industrial Editorial aesthetic).
+**Completed:** v0.1.1 (2026-03-24) — `DESIGN.md` created with full token set: Fraunces/Instrument Sans typography, `#0D0C0B`/`#CBFF2E` palette, spacing scale, and layout rules.
+
+### Redesign website (EN + ZH) per DESIGN.md
+**What:** Apply the Industrial Editorial design system to `website/index.html` and `website/zh/index.html`.
+**Completed:** v0.1.1 (2026-03-24) — Both pages fully redesigned. Fixed navigation links, SEO meta tags, cross-browser compat, and mobile responsive nav.
