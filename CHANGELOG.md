@@ -9,6 +9,37 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-03-24
+
+### Changed
+
+- **Complete website redesign (EN + ZH)** — redesigned `website/index.html` and
+  `website/zh/index.html` to the Industrial Editorial design system defined in `DESIGN.md`:
+  - Display font: Fraunces 900 (headlines/hero) with Instrument Sans body and IBM Plex Sans
+    Condensed labels
+  - Color palette: warm near-black `#0D0C0B` background, electric chartreuse `#CBFF2E`
+    accent, warm off-white `#EDE9E3` text
+  - 55/45 left-anchored hero grid with diagonal structural line
+  - Operator-console section labels (uppercase, IBM Plex Sans Condensed, chartreuse hairline)
+  - Replaced GitHub-ish blue/gray palette with Industrial Editorial tokens
+- **Website navigation and link fixes:**
+  - Fixed root-relative hrefs (`/`, `/index.html`) → relative paths (`./`) for correct
+    GitHub Pages project-site routing
+  - Fixed broken `../docs/` links → rendered HTML docs at `docs/getting-started.html`
+    and `docs/plugin-guide.html` (built by `scripts/build_docs.py` at deploy time)
+  - Unified GitHub repo references to `castops/cast-cli` in both language variants
+  - Added `target="_blank" rel="noopener noreferrer"` to all external links in both files
+- **Website SEO and meta improvements:**
+  - Added `og:title`, `og:description`, `og:type` Open Graph tags to EN page
+  - Fixed stale `og:title` mismatch with `<title>` in EN page
+  - Added `<meta name="theme-color" content="#0D0C0B">` to both pages
+  - Added `<link rel="canonical">` to both pages
+  - Added `hreflang` alternate link tags (`en` / `zh-CN`) to both pages
+  - Fixed `preconnect` hint to add missing `crossorigin` attribute on `fonts.googleapis.com`
+  - Fixed EN nav `color-mix()` background → `rgba()` with `-webkit-backdrop-filter` for
+    Safari/WebView/enterprise browser compatibility
+  - Added mobile responsive nav collapse at 900px breakpoint to ZH page
+
 ### Added
 
 - **Node.js and Go GitHub Actions templates** — production-ready pipelines for both stacks:

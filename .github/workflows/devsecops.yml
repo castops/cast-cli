@@ -80,7 +80,10 @@ jobs:
       - name: pip-audit
         run: |
           pip install pip-audit
-          pip-audit
+          pip install -e ".[dev]"
+          # CVE-2026-4539: ReDoS in pygments AdlLexer — no fix released yet
+          # (https://github.com/advisories/GHSA-5239-wwwm-4pmq); re-enable once patched
+          pip-audit --ignore-vuln CVE-2026-4539
 
   # ── 4. Container Security ──────────────────────────────────────────────────
   container:
