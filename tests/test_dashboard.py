@@ -2,7 +2,6 @@
 
 import json
 import sys
-import pytest
 from pathlib import Path
 
 # Add project root to path for importing dashboard module
