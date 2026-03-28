@@ -8,3 +8,4 @@ build/
 .gstack/
 website/docs/
 website/zh/docs/
+.context

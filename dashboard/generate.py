@@ -20,7 +20,17 @@ def parse_sarif(sarif_path: Path) -> dict:
         data = json.loads(sarif_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
         print(f"Warning: could not parse {sarif_path}: {e}", file=sys.stderr)
-        return None
+        return {
+            "name": sarif_path.stem,
+            "tools": [],
+            "status": "ERROR",
+            "error": str(e),
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "findings": [],
+        }
 
     findings = []
     tools = set()
@@ -135,6 +145,8 @@ def render_badge(status: str) -> str:
         return '<span class="badge pass">&#10003; PASS</span>'
     if status == "FAIL":
         return '<span class="badge fail">&#10007; FAIL</span>'
+    if status == "ERROR":
+        return '<span class="badge error">&#9888; PARSE ERR</span>'
     return '<span class="badge warn">&#9888; WARN</span>'
 
 
@@ -153,10 +165,22 @@ def _escape(text: str) -> str:
     )
 
 
-def render_compliance_banner(failing: int, total_critical: int, total_scans: int) -> str:
+def render_compliance_banner(failing: int, total_critical: int, total_scans: int, parse_errors: int = 0) -> str:
     if total_scans == 0:
         return ""
     if failing == 0 and total_critical == 0:
+        if parse_errors > 0:
+            desc = (
+                f"{parse_errors} SARIF file{'s' if parse_errors != 1 else ''} could not be parsed. "
+                "Results may be incomplete."
+            )
+            return (
+                '<div class="compliance-banner has-parse-errors" role="alert">'
+                '<span class="icon" aria-hidden="true">⚠️</span>'
+                '<div><div class="verdict">PARSE ERRORS</div>'
+                f'<div class="sub">{desc}</div></div>'
+                "</div>"
+            )
         sub = f"All {total_scans} scan{'s' if total_scans != 1 else ''} passed. No critical issues."
         return (
             '<div class="compliance-banner all-clear" role="status" aria-live="polite">'
@@ -194,7 +218,16 @@ def render_empty_state() -> str:
 def render_table(scans: list[dict]) -> str:
     rows_html = []
     for scan in scans:
-        row_class = ' class="row-fail"' if scan["status"] == "FAIL" else ""
+        if scan["status"] == "FAIL":
+            row_class = ' class="row-fail"'
+        elif scan["status"] == "ERROR":
+            row_class = ' class="row-error"'
+        else:
+            row_class = ""
+        if scan.get("error"):
+            details = f'<span class="parse-error-msg">{_escape(scan["error"])}</span>'
+        else:
+            details = render_findings_html(scan["findings"])
         row = (
             f"<tr{row_class}>"
             f"<td>{render_badge(scan['status'])}</td>"
@@ -205,7 +238,7 @@ def render_table(scans: list[dict]) -> str:
             f"<td>{render_count(scan['critical'], 'critical')}</td>"
             f"<td>{render_count(scan['high'], 'high')}</td>"
             f"<td>{render_count(scan['medium'], '')}</td>"
-            f"<td>{render_findings_html(scan['findings'])}</td>"
+            f"<td>{details}</td>"
             f"</tr>"
         )
         rows_html.append(row)
@@ -237,15 +270,7 @@ def generate_dashboard(
     if not sarif_files:
         print(f"No .sarif files found in {sarif_dir}", file=sys.stderr)
 
-    scans = [r for f in sarif_files if (r := parse_sarif(f)) is not None]
-
-    if sarif_files and not scans:
-        print(
-            f"Error: found {len(sarif_files)} SARIF file(s) but all failed to parse. "
-            "Dashboard not generated to avoid false 'ALL CLEAR' output.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    scans = [parse_sarif(f) for f in sarif_files]
 
     # Override the scan name with project_name if only one SARIF file
     if project_name and len(scans) == 1:
@@ -254,11 +279,12 @@ def generate_dashboard(
     total_critical = sum(s["critical"] for s in scans)
     total_high = sum(s["high"] for s in scans)
     failing = sum(1 for s in scans if s["status"] == "FAIL")
+    parse_errors = sum(1 for s in scans if s["status"] == "ERROR")
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     sha_short = commit_sha[:12] if len(commit_sha) > 12 else commit_sha
 
-    compliance_banner = render_compliance_banner(failing, total_critical, len(scans))
+    compliance_banner = render_compliance_banner(failing, total_critical, len(scans), parse_errors)
     table_or_empty = render_table(scans) if scans else render_empty_state()
 
     template_path = Path(__file__).parent / "template.html"
@@ -278,7 +304,12 @@ def generate_dashboard(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
-    status = "ALL CLEAR" if failing == 0 and total_critical == 0 else f"{failing} FAILING"
+    if parse_errors > 0 and failing == 0 and total_critical == 0:
+        status = f"PARSE ERRORS ({parse_errors})"
+    elif failing == 0 and total_critical == 0:
+        status = "ALL CLEAR"
+    else:
+        status = f"{failing} FAILING"
     print(f"Dashboard written to {output_path}")
     print(f"  Status: {status} | Critical: {total_critical} | High: {total_high} | Scans: {len(scans)}")
 

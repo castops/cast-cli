@@ -1,5 +1,6 @@
 """CAST CLI — entry point."""
 
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -32,6 +33,21 @@ SUPPORTED_TYPES = {
 }
 
 COMING_SOON = ["docker"]
+
+
+def _prompt_type_selection(console: Console) -> str:
+    """Show a numbered menu and return the chosen project type."""
+    console.print("[yellow]Could not detect project type.[/yellow]")
+    console.print("\nSelect a project type:\n")
+    choices = list(SUPPORTED_TYPES.items())
+    for i, (t, desc) in enumerate(choices, 1):
+        console.print(f"  [{i}] {t} — {desc}")
+    console.print()
+    while True:
+        raw = input(f"Enter number [1-{len(choices)}]: ").strip()
+        if raw.isdigit() and 1 <= int(raw) <= len(choices):
+            return choices[int(raw) - 1][0]
+        console.print("[red]Invalid choice. Please enter a number from the list.[/red]")
 
 
 @app.command()
@@ -70,11 +86,14 @@ def init(
     detected = project_type or detect_project(Path("."))
 
     if detected is None:
-        console.print("[yellow]Could not detect project type.[/yellow]")
-        console.print("Use [bold]--type[/bold] to specify one:")
-        for t, desc in SUPPORTED_TYPES.items():
-            console.print(f"  cast init --type {t}  ({desc})")
-        raise typer.Exit(1)
+        if sys.stdout.isatty():
+            detected = _prompt_type_selection(console)
+        else:
+            console.print("[yellow]Could not detect project type.[/yellow]")
+            console.print("Use [bold]--type[/bold] to specify one:")
+            for t, desc in SUPPORTED_TYPES.items():
+                console.print(f"  cast init --type {t}  ({desc})")
+            raise typer.Exit(1)
 
     if detected in COMING_SOON:
         console.print(

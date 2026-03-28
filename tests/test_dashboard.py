@@ -2,7 +2,6 @@
 
 import json
 import sys
-import pytest
 from pathlib import Path
 
 # Add project root to path for importing dashboard module
@@ -62,11 +61,16 @@ class TestParseSarif:
         assert len(result["findings"]) == 1
         assert result["findings"][0]["rule_id"] == "rule-abc"
 
-    def test_invalid_json_returns_none(self, tmp_path):
+    def test_invalid_json_returns_error_dict(self, tmp_path):
         bad_file = tmp_path / "bad.sarif"
         bad_file.write_text("this is not json {{{")
         result = parse_sarif(bad_file)
-        assert result is None
+        assert result is not None
+        assert result["status"] == "ERROR"
+        assert "error" in result
+        assert result["name"] == "bad"
+        assert result["critical"] == 0
+        assert result["findings"] == []
 
     def test_missing_runs_key_returns_empty_pass(self, tmp_path):
         sarif_file = tmp_path / "empty.sarif"
@@ -118,16 +122,17 @@ class TestGenerateDashboard:
         generate_dashboard(sarif_dir, output)
         assert output.exists()
 
-    def test_all_sarif_fail_to_parse_exits_nonzero(self, tmp_path, capsys):
+    def test_all_sarif_fail_to_parse_shows_parse_error_in_html(self, tmp_path):
         sarif_dir = tmp_path / "sarif"
         sarif_dir.mkdir()
         bad = sarif_dir / "bad.sarif"
         bad.write_text("not json")
         output = tmp_path / "dashboard.html"
-        with pytest.raises(SystemExit) as exc_info:
-            generate_dashboard(sarif_dir, output)
-        assert exc_info.value.code == 1
-        assert not output.exists()
+        generate_dashboard(sarif_dir, output)
+        assert output.exists()
+        html = output.read_text()
+        assert "PARSE ERR" in html
+        assert "ALL CLEAR" not in html
 
     def test_empty_sarif_dir_generates_empty_state_html(self, tmp_path):
         sarif_dir = tmp_path / "sarif"
