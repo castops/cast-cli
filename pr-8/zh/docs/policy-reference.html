@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>策略参考 — CAST</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-switch a {
+      padding: 4px 10px;
+      color: var(--muted);
+      background: transparent;
+      transition: color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .lang-switch a:hover { color: var(--text); background: var(--surface); }
+    .lang-switch a.active { color: var(--text); background: var(--surface2); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      text-decoration: none;
+      background: transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--surface); border-color: var(--muted); text-decoration: none; }
+
+    .doc-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 760px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 12px 16px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sidebar a:hover { color: var(--text); }
+    .sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.05); }
+
+    .doc-content { min-width: 0; }
+    .doc-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .doc-content h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .doc-content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+    .doc-content h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .doc-content p { margin-bottom: 16px; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0 0 16px 20px; }
+    .doc-content li { margin-bottom: 6px; line-height: 1.6; }
+    .doc-content code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--purple);
+    }
+    .doc-content pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .doc-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .doc-content table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+    .doc-content th { background: var(--surface2); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
+    .doc-content td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .doc-content tr:last-child td { border-bottom: none; }
+    .doc-content hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .doc-content blockquote {
+      border-left: 3px solid var(--yellow);
+      background: rgba(210,153,34,0.08);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .doc-content a { color: var(--blue); }
+    .doc-content a:hover { text-decoration: underline; }
+    .doc-content strong { font-weight: 600; color: var(--text); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="../../zh/">
+        <span>🛡️</span> CAST
+      </a>
+      <div class="nav-links">
+        <a href="../../zh/#how-it-works">工作原理</a>
+        <a href="../../zh/#templates">模板</a>
+        <a href="getting-started.html">文档</a>
+        <a href="https://github.com/castops/cast/blob/main/CHANGELOG.md">更新日志</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <a href="../../docs/policy-reference.html">EN</a>
+          <a href="./policy-reference.html" class="active">中文</a>
+        </div>
+        <a class="btn-ghost" href="https://github.com/castops/cast">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="doc-layout">
+
+  <aside class="sidebar">
+      <div class="sidebar-label">文档</div>
+      <a href="getting-started.html">快速入门</a>
+      <div class="sidebar-label">参考</div>
+      <a href="cli-reference.html">CLI 参考</a>
+      <a href="pipeline-reference.html">流水线参考</a>
+      <a href="policy-reference.html" class="active">策略参考</a>
+      <div class="sidebar-label">指南</div>
+      <a href="gitlab-guide.html">GitLab CI</a>
+      <a href="dashboard-guide.html">安全看板</a>
+      <a href="plugin-guide.html">插件指南</a>
+    </aside>
+
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href="../../zh/">CAST</a>
+        <span class="sep">/</span>
+        <span>文档</span>
+        <span class="sep">/</span>
+        <span>策略参考</span>
+      </div>
+
+<h1>策略参考 — CAST 安全门禁</h1>
+<p>CAST 使用 <a href="https://conftest.dev">conftest</a> 配合 OPA Rego 策略评估 SARIF 安全发现。
+该方案将硬编码的 Shell 逻辑替换为版本化、可审计的策略文件。</p>
+<h2>内置策略</h2>
+<p>CAST 附带三种策略，通过 <code>CAST_POLICY</code> 变量切换：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>文件</th>
+<th>阻断条件</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td><code>policy/default.rego</code></td>
+<td>仅 CRITICAL</td>
+<td>生产流水线</td>
+</tr>
+<tr>
+<td><code>strict</code></td>
+<td><code>policy/strict.rego</code></td>
+<td>CRITICAL + HIGH</td>
+<td>高安全要求项目</td>
+</tr>
+<tr>
+<td><code>permissive</code></td>
+<td><code>policy/permissive.rego</code></td>
+<td>从不阻断</td>
+<td>审计 / 接入期</td>
+</tr>
+</tbody>
+</table>
+<h3>选择策略</h3>
+<p><strong>GitHub Actions</strong> — 设置 Repository Variable：</p>
+<pre><code>Settings → Secrets and variables → Actions → Variables → New variable
+Name: CAST_POLICY
+Value: strict
+</code></pre>
+<p><strong>GitLab CI</strong> — 设置 CI/CD Variable：</p>
+<pre><code>Settings → CI/CD → Variables → Add variable
+Key: CAST_POLICY
+Value: strict
+</code></pre>
+<p>未设置 <code>CAST_POLICY</code> 时，默认使用 <code>default</code> 策略。</p>
+<hr />
+<h2>门禁工作原理</h2>
+<ol>
+<li>SARIF 生成 Job（Semgrep、Trivy）将输出作为 artifact 上传</li>
+<li><code>gate</code> / <code>cast-gate</code> Job 下载所有 <code>cast-sarif-*</code> artifact</li>
+<li>conftest 对每个 SARIF 文件执行策略评估</li>
+<li>任意 <code>deny</code> 规则触发 → 门禁 Job 以退出码 1 失败，阻断合并 / MR</li>
+</ol>
+<h3>SARIF 严重级别映射</h3>
+<table>
+<thead>
+<tr>
+<th>工具严重级别</th>
+<th>SARIF <code>level</code></th>
+<th><code>default</code></th>
+<th><code>strict</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRITICAL</td>
+<td><code>"error"</code></td>
+<td>❌ 阻断</td>
+<td>❌ 阻断</td>
+</tr>
+<tr>
+<td>HIGH</td>
+<td><code>"warning"</code></td>
+<td>✅ 放行</td>
+<td>❌ 阻断</td>
+</tr>
+<tr>
+<td>MEDIUM</td>
+<td><code>"warning"</code></td>
+<td>✅ 放行</td>
+<td>❌ 阻断</td>
+</tr>
+<tr>
+<td>LOW</td>
+<td><code>"note"</code></td>
+<td>✅ 放行</td>
+<td>✅ 放行</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注：Semgrep 映射 ERROR→<code>"error"</code>，WARNING→<code>"warning"</code>。
+Trivy 使用 <code>--severity CRITICAL,HIGH</code> 参数时，CRITICAL 和 HIGH 均映射为 <code>"error"</code>。</p>
+</blockquote>
+<hr />
+<h2>编写自定义策略</h2>
+<p>在仓库中创建 <code>policy/</code> 目录，放入至少一个 <code>.rego</code> 文件，
+门禁 Job 会优先使用本地策略而不从 CAST repo 下载：</p>
+<pre><code>your-repo/
+├── policy/
+│   └── my-policy.rego   ← 门禁使用此文件
+├── .github/workflows/
+│   └── devsecops.yml
+</code></pre>
+<h3>示例：仅阻断特定规则 ID</h3>
+<pre><code class="language-rego">package main
+
+import future.keywords.if
+import future.keywords.in
+
+# 高危规则白名单——命中时必须阻断
+BLOCKED_RULES := {&quot;sql-injection&quot;, &quot;hardcoded-secret&quot;, &quot;eval-injection&quot;}
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.ruleId in BLOCKED_RULES
+    msg := sprintf(&quot;高危规则 %s: %s&quot;, [result.ruleId, result.message.text])
+}
+</code></pre>
+<h3>示例：跳过测试代码中的发现</h3>
+<pre><code class="language-rego">package main
+
+import future.keywords.if
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.level == &quot;error&quot;
+    location := result.locations[_]
+    path := location.physicalLocation.artifactLocation.uri
+    not startswith(path, &quot;tests/&quot;)   # 忽略测试目录的发现
+    msg := sprintf(&quot;生产代码存在 CRITICAL: %s — %s&quot;, [path, result.message.text])
+}
+</code></pre>
+<h3>示例：按工具区分阻断策略</h3>
+<pre><code class="language-rego">package main
+
+import future.keywords.if
+
+# Semgrep 发现：阻断所有 error 级别
+deny[msg] if {
+    run := input.runs[_]
+    run.tool.driver.name == &quot;Semgrep&quot;
+    result := run.results[_]
+    result.level == &quot;error&quot;
+    msg := sprintf(&quot;[Semgrep CRITICAL] %s: %s&quot;, [result.ruleId, result.message.text])
+}
+
+# Trivy 发现：仅阻断 CVSS 评分 &gt;= 9.0 的漏洞
+deny[msg] if {
+    run := input.runs[_]
+    run.tool.driver.name == &quot;Trivy&quot;
+    result := run.results[_]
+    result.level == &quot;error&quot;
+    # 从 rule 元数据读取 CVSS 分数
+    rule := run.tool.driver.rules[_]
+    rule.id == result.ruleId
+    score := rule.properties[&quot;security-severity&quot;]
+    score &gt;= 9.0
+    msg := sprintf(&quot;[Trivy CVSS %.1f] %s: %s&quot;, [score, result.ruleId, result.message.text])
+}
+</code></pre>
+<hr />
+<h2>本地测试策略</h2>
+<p><strong>安装 conftest：</strong></p>
+<pre><code class="language-bash"># macOS
+brew install conftest
+
+# Linux
+curl -fsSL -o conftest.tar.gz \
+  https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz
+tar xzf conftest.tar.gz &amp;&amp; sudo mv conftest /usr/local/bin/
+</code></pre>
+<p><strong>对 SARIF 文件评估：</strong></p>
+<pre><code class="language-bash"># 使用默认策略（阻断 CRITICAL）
+conftest test path/to/semgrep.sarif --policy policy/default.rego
+
+# 使用严格策略（阻断 HIGH + CRITICAL）
+conftest test path/to/trivy.sarif --policy policy/strict.rego
+
+# 对目录中所有策略文件评估
+conftest test path/to/*.sarif --policy policy/
+
+# 使用宽松策略（仅展示，不阻断）
+conftest test path/to/semgrep.sarif --policy policy/permissive.rego
+</code></pre>
+<p>退出码非零代表策略阻断——与 CI 中的行为完全一致。</p>
+<hr />
+<h2>理解 Rego 策略语法</h2>
+<p>CAST 策略使用 OPA Rego 语言。关键概念：</p>
+<pre><code class="language-rego">package main          # 包名（conftest 默认查找 main 包）
+
+import future.keywords.if    # 启用 if 关键字（OPA 1.0+ 语法）
+import future.keywords.in    # 启用 in 关键字
+
+# deny 规则：触发时阻断（exit 1）
+deny[msg] if {
+    # 在 SARIF JSON 中遍历
+    run := input.runs[_]          # input 是解析后的 SARIF 对象
+    result := run.results[_]      # _ 表示&quot;任意元素&quot;
+    result.level == &quot;error&quot;       # 条件：所有条件都满足时规则触发
+    msg := sprintf(&quot;...&quot;)          # msg 是错误消息
+}
+
+# warn 规则：触发时仅输出警告（exit 0）
+warn[msg] if {
+    # ...
+}
+</code></pre>
+<p>详细文档见 <a href="https://www.openpolicyagent.org/docs/latest/policy-language/">OPA Rego 参考</a>。</p>
+    </main>
+
+  </div>
+
+  <footer>
+    <p>CAST — CI/CD Automation &amp; Security Toolkit &nbsp;·&nbsp; <a href="https://github.com/castops/cast">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/castops/cast/blob/main/LICENSE">MIT License</a></p>
+  </footer>
+
+</body>
+</html>
