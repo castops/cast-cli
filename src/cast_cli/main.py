@@ -53,10 +53,10 @@ def _prompt_type_selection(console: Console) -> str:
 @app.command()
 def version() -> None:
     """Show CAST version."""
-    from importlib.metadata import version as pkg_version
+    from importlib.metadata import version as pkg_version, PackageNotFoundError
     try:
-        v = pkg_version("cast-cli")
-    except Exception:
+        v = pkg_version("castops")
+    except PackageNotFoundError:
         v = "dev"
     console.print(f"cast [bold cyan]{v}[/bold cyan]")
 
