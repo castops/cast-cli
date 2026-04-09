@@ -284,7 +284,7 @@ def validate(
     gate_blocked = blocked_count > 0
 
     # ── output ────────────────────────────────────────────────────────────────
-    console.print(f"[bold green]✓[/bold green] SARIF valid")
+    console.print("[bold green]✓[/bold green] SARIF valid")
     console.print(f"  Tool(s):   {tools_str}")
     console.print(
         f"  Findings:  {total} "
