@@ -1,5 +1,7 @@
 """CAST CLI — entry point."""
 
+import json
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -86,7 +88,7 @@ def init(
     detected = project_type or detect_project(Path("."))
 
     if detected is None:
-        if sys.stdout.isatty():
+        if sys.stdin.isatty():
             detected = _prompt_type_selection(console)
         else:
             console.print("[yellow]Could not detect project type.[/yellow]")
@@ -162,3 +164,141 @@ def init(
             "  [bold]git commit -m 'ci: add CAST DevSecOps pipeline'[/bold]\n"
             "  [bold]git push[/bold]"
         )
+
+
+# ── Gate policy logic (mirrors policy/*.rego, no OPA dependency) ──────────────
+
+_VALID_POLICIES = ("default", "strict", "permissive")
+
+
+def _apply_gate(runs: list, policy: str) -> tuple[list[str], int]:
+    """Return (blocked_messages, blocked_count) for the given policy."""
+    blocked: list[str] = []
+    for run in runs:
+        tool = run.get("tool", {}).get("driver", {}).get("name", "unknown")
+        for result in run.get("results", []):
+            level = result.get("level", "note")
+            rule_id = result.get("ruleId", "")
+            msg = result.get("message", {}).get("text", "")[:120]
+            if policy == "default" and level == "error":
+                blocked.append(f"[CRITICAL] {tool} — {msg} (rule: {rule_id})")
+            elif policy == "strict" and level in ("error", "warning"):
+                label = "CRITICAL" if level == "error" else "HIGH"
+                blocked.append(f"[{label}] {tool} — {msg} (rule: {rule_id})")
+            # permissive: never blocked
+    return blocked, len(blocked)
+
+
+@app.command()
+def validate(
+    sarif_file: Path = typer.Argument(..., help="Path to a SARIF file to validate."),
+    policy: Optional[str] = typer.Option(
+        None,
+        "--policy",
+        help="Gate policy: default / strict / permissive. "
+             "Falls back to CAST_POLICY env var, then 'default'.",
+    ),
+) -> None:
+    """Validate a SARIF file and preview cast-gate blocking behavior.
+
+    Exit codes:
+      0 — SARIF valid and gate would allow
+      1 — SARIF format error (invalid JSON or missing required fields)
+      2 — SARIF valid but gate would block
+    """
+    effective_policy = policy or os.environ.get("CAST_POLICY", "default")
+
+    if effective_policy not in _VALID_POLICIES:
+        console.print(
+            f"[red]Unknown policy:[/red] {effective_policy!r} "
+            f"(valid: {', '.join(_VALID_POLICIES)})"
+        )
+        raise typer.Exit(1)
+
+    # ── load file ─────────────────────────────────────────────────────────────
+    try:
+        text = sarif_file.read_text(encoding="utf-8")
+    except OSError as e:
+        console.print(f"[red]Cannot read file:[/red] {e}")
+        raise typer.Exit(1)
+
+    # ── parse JSON ────────────────────────────────────────────────────────────
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as e:
+        console.print(f"[red]✗ Invalid JSON:[/red] {e}")
+        raise typer.Exit(1)
+
+    # ── structural validation ─────────────────────────────────────────────────
+    format_errors: list[str] = []
+    if not isinstance(data, dict):
+        format_errors.append("Top-level value must be a JSON object")
+    else:
+        version = data.get("version")
+        if version != "2.1.0":
+            format_errors.append(f'version must be "2.1.0", got: {version!r}')
+        runs = data.get("runs")
+        if runs is None:
+            format_errors.append('Missing required field: "runs"')
+        elif not isinstance(runs, list):
+            format_errors.append('"runs" must be an array')
+        else:
+            for i, run in enumerate(runs):
+                if not isinstance(run, dict):
+                    format_errors.append(f"runs[{i}] must be an object")
+                    continue
+                driver = run.get("tool", {}).get("driver", {})
+                if not driver.get("name"):
+                    format_errors.append(f"runs[{i}].tool.driver.name is missing or empty")
+
+    if format_errors:
+        console.print("[red]✗ SARIF format errors:[/red]")
+        for err in format_errors:
+            console.print(f"  • {err}")
+        raise typer.Exit(1)
+
+    # ── count findings ────────────────────────────────────────────────────────
+    runs = data.get("runs", [])
+    tools: set[str] = set()
+    error_count = warning_count = note_count = 0
+
+    for run in runs:
+        tools.add(run.get("tool", {}).get("driver", {}).get("name", "unknown"))
+        for result in run.get("results", []):
+            level = result.get("level", "note")
+            if level == "error":
+                error_count += 1
+            elif level == "warning":
+                warning_count += 1
+            else:
+                note_count += 1
+
+    total = error_count + warning_count + note_count
+    tools_str = ", ".join(sorted(tools)) or "none"
+
+    # ── gate evaluation ───────────────────────────────────────────────────────
+    blocked_msgs, blocked_count = _apply_gate(runs, effective_policy)
+    gate_blocked = blocked_count > 0
+
+    # ── output ────────────────────────────────────────────────────────────────
+    console.print(f"[bold green]✓[/bold green] SARIF valid")
+    console.print(f"  Tool(s):   {tools_str}")
+    console.print(
+        f"  Findings:  {total} "
+        f"({error_count} error, {warning_count} warning, {note_count} note)"
+    )
+    console.print(f"  Policy:    {effective_policy}")
+
+    if gate_blocked:
+        console.print(
+            f"  Gate:      [red]❌ {blocked_count} finding(s) would be blocked[/red]"
+        )
+        console.print()
+        for bm in blocked_msgs[:10]:
+            console.print(f"  [red]•[/red] {bm}")
+        if len(blocked_msgs) > 10:
+            console.print(f"  ... and {len(blocked_msgs) - 10} more")
+        raise typer.Exit(2)
+
+    console.print(f"  Gate:      [green]✓ would allow (policy: {effective_policy})[/green]")
+

@@ -87,20 +87,6 @@ cast-quality:
 cast-gate:
   stage: cast-gate
   image: alpine:latest
-  variables:
-    DEFAULT_REGO: |
-      package main
-
-      import future.keywords.if
-      import future.keywords.in
-
-      deny[msg] if {
-          run := input.runs[_]
-          result := run.results[_]
-          result.level == "error"
-          tool := run.tool.driver.name
-          msg := sprintf("[CRITICAL] %s — %s (rule: %s)", [tool, result.message.text, result.ruleId])
-      }
   needs:
     - job: cast-secrets
       artifacts: false
@@ -126,7 +112,20 @@ cast-gate:
       #   https://github.com/castops/cast/tree/main/policy
       if [ ! -d policy ] || [ -z "$(ls -A policy/*.rego 2>/dev/null)" ]; then
         mkdir -p policy
-        printf '%s' "$DEFAULT_REGO" > policy/active.rego
+        cat > policy/active.rego << 'REGO'
+package main
+
+import future.keywords.if
+import future.keywords.in
+
+deny[msg] if {
+    run := input.runs[_]
+    result := run.results[_]
+    result.level == "error"
+    tool := run.tool.driver.name
+    msg := sprintf("[CRITICAL] %s — %s (rule: %s)", [tool, result.message.text, result.ruleId])
+}
+REGO
       fi
     - |
       SARIF_FILES=""
