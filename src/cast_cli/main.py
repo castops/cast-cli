@@ -170,6 +170,9 @@ def init(
 
 _VALID_POLICIES = ("default", "strict", "permissive")
 
+# Truncate long finding messages in validate output to keep lines readable.
+_MAX_MESSAGE_LENGTH = 120
+
 
 def _apply_gate(runs: list, policy: str) -> tuple[list[str], int]:
     """Return (blocked_messages, blocked_count) for the given policy."""
@@ -179,7 +182,7 @@ def _apply_gate(runs: list, policy: str) -> tuple[list[str], int]:
         for result in run.get("results", []):
             level = result.get("level", "note")
             rule_id = result.get("ruleId", "")
-            msg = result.get("message", {}).get("text", "")[:120]
+            msg = result.get("message", {}).get("text", "")[:_MAX_MESSAGE_LENGTH]
             if policy == "default" and level == "error":
                 blocked.append(f"[CRITICAL] {tool} — {msg} (rule: {rule_id})")
             elif policy == "strict" and level in ("error", "warning"):

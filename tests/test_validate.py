@@ -171,6 +171,21 @@ class TestValidateCommand:
         assert "1 warning" in result.output
         assert "1 note" in result.output
 
+    def test_output_shows_plural_finding_counts(self, tmp_path):
+        sarif = _write_sarif(tmp_path, [_make_run("Semgrep", [
+            _make_result("error", "r1"),
+            _make_result("error", "r2"),
+            _make_result("warning", "r3"),
+            _make_result("warning", "r4"),
+            _make_result("note", "r5"),
+            _make_result("note", "r6"),
+        ])])
+        result = runner.invoke(app, ["validate", str(sarif)])
+        # 2 error, 2 warning, 2 note → total 6
+        assert "2 error" in result.output
+        assert "2 warning" in result.output
+        assert "2 note" in result.output
+
     def test_cast_policy_env_var_respected(self, tmp_path, monkeypatch):
         monkeypatch.setenv("CAST_POLICY", "permissive")
         sarif = _write_sarif(tmp_path, [_make_run("Semgrep", [_make_result("error")])])
